@@ -1,0 +1,87 @@
+<div class="overlay" [class.inline]="inline" (click)="close()">
+  <div class="window" [class.inline]="inline" (click)="$event.stopPropagation()">
+    @if (!inline) {
+    <div class="titlebar">
+      <div class="tb-left">
+        <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+          <defs><linearGradient id="lmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6E6FFD"/><stop offset="1" stop-color="#3396CD"/></linearGradient></defs>
+          <g stroke="url(#lmg)" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M16 28V12"/><path d="M16 18C10.5 18 8.6 13.8 9.4 9.2"/><path d="M16 16.5L21 14"/></g>
+          <circle cx="16" cy="8.2" r="3" fill="url(#lmg)"/><circle cx="22.6" cy="12.6" r="2.4" fill="url(#lmg)"/>
+        </svg>
+        <span>Load details</span>
+      </div>
+      <div class="tb-controls">
+        <button class="tb-btn" (click)="expand.emit()" aria-label="Expand to page" title="Open as page"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5M20 15v5h-5M4 20l6-6M20 4l-6 6" stroke="#737b8c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="tb-btn danger" (click)="close()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#e5484d" stroke-width="1.9" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>
+    }
+
+    @if (!inline) {
+    <div class="head">
+      <span class="mono load">{{ val('load') }}</span>
+      @if (has('status')) { <span class="pill" [ngClass]="tone('status')">{{ val('status') }}</span> }
+      @if (has('importance')) { <span class="pill" [ngClass]="tone('importance')">{{ val('importance') }}</span> }
+    </div>
+    }
+
+    <div class="body">
+      <!-- data -->
+      <div class="grid">
+        @if (has('customer')) { <div class="f"><span>Customer</span><b>{{ val('customer') }}</b></div> }
+        @if (has('carrier')) { <div class="f"><span>Carrier</span><b>{{ val('carrier') }}</b></div> }
+        <div class="f span2"><span>Origin</span><b>{{ origin }}</b></div>
+        <div class="f span2"><span>Destination</span><b>{{ dest }}</b></div>
+        @if (has('equip')) { <div class="f"><span>Equipment</span><b>{{ val('equip') }}</b></div> }
+        @if (has('rate')) { <div class="f"><span>Rate</span><b class="mono">{{ val('rate') }}</b></div> }
+        @if (has('curr')) { <div class="f"><span>Currency</span><b>{{ val('curr') }}</b></div> }
+        @if (has('ship')) { <div class="f"><span>Ship date</span><b class="mono">{{ val('ship') }}</b></div> }
+        @if (has('delivery')) { <div class="f"><span>Delivery date</span><b class="mono">{{ val('delivery') }}</b></div> }
+        @if (has('date')) { <div class="f span2"><span>Offered</span><b class="mono">{{ val('date') }}</b></div> }
+      </div>
+
+      <!-- contact + dispatcher -->
+      <div class="two">
+        <div class="panel">
+          <span class="p-label">Contact</span>
+          <b class="p-name">{{ has('contactName') ? val('contactName') : 'Dana Whitfield' }}</b>
+          <span class="p-line">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 4h3.5l1.6 4-2 1.4a11 11 0 0 0 4.9 4.9l1.4-2 4 1.6V18a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 3 6.2 2 2 0 0 1 5 4z" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="mono">{{ has('contactPhone') ? val('contactPhone') : '(213) 555-0190' }}</span>
+          </span>
+          <span class="p-mail">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#9aa2b2" stroke-width="1.6"/><path d="M4 6l8 6 8-6" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>{{ has('contactEmail') ? val('contactEmail') : 'ops@customer.example' }}</span>
+          </span>
+        </div>
+        <div class="panel">
+          <span class="p-label">Dispatcher responsible</span>
+          <div class="disp">
+            <span class="disp-av">{{ (has('dispatcher') ? val('dispatcher') : 'Dispatcher 1').replace('Dispatcher ', 'D') }}</span>
+            <b class="p-name">{{ has('dispatcher') ? val('dispatcher') : 'Dispatcher 1' }}</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- notes -->
+      <div class="notes-wrap">
+        <div class="nw-head">Dispatcher notes <span class="count">{{ notes().length }}</span></div>
+        <div class="notes">
+          @for (n of notes(); track $index) {
+            <div class="note">
+              <span class="n-av" [style.background]="n.color">{{ n.initials }}</span>
+              <div class="n-body">
+                <div class="n-head"><b>{{ n.who }}</b><span>{{ n.time }}</span></div>
+                <div class="n-text">{{ n.text }}</div>
+              </div>
+            </div>
+          }
+        </div>
+        <div class="add">
+          <input [(ngModel)]="draft" (keyup.enter)="addNote()" placeholder="Leave a note…" />
+          <button (click)="addNote()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
