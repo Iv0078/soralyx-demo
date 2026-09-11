@@ -12,6 +12,7 @@ import { CarrierDetail } from './models';
 export class CarrierModalComponent {
   @Input() detail!: CarrierDetail;
   @Output() closed = new EventEmitter<void>();
+  @Output() expand = new EventEmitter<void>();
 
   get maxActivity(): number {
     return Math.max(...this.detail.activity.map(a => a.value), 1);

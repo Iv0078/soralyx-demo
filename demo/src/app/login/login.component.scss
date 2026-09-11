@@ -33,7 +33,7 @@
 .glow-b { width: 320px; height: 320px; background: #52b6ea; bottom: -120px; left: -60px; opacity: 0.45; }
 
 /* Form panel */
-.form-panel { display: flex; align-items: center; justify-content: center; background: #fff; padding: 40px; }
+.form-panel { display: flex; align-items: center; justify-content: center; background: var(--surface); padding: 40px; }
 .form-wrap { width: 100%; max-width: 380px; }
 .form-head h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 6px; color: var(--ink); }
 .form-head p { font-size: 14px; color: var(--muted); margin: 0 0 28px; }
@@ -43,7 +43,7 @@
 .control {
   display: flex; align-items: center; gap: 9px;
   height: 46px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 10px;
-  transition: border-color .15s, box-shadow .15s; background: #fff;
+  transition: border-color .15s, box-shadow .15s; background: var(--surface);
 }
 .control:focus-within { border-color: var(--brand-purple); box-shadow: 0 0 0 3px rgba(110,111,253,0.14); }
 .control input {

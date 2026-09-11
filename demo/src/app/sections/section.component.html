@@ -1,16 +1,42 @@
 @if (data; as d) {
   <div class="page">
-    <div class="page-head">
-      <h1>{{ d.title }}</h1>
-      <p>{{ d.subtitle }}</p>
+    <div class="topbar">
+      <div class="tb-name">
+        <h1>{{ d.title }}</h1>
+        <p>{{ d.subtitle }}</p>
+      </div>
     </div>
+
+    @if (siblings.length || quickViewable) {
+      <div class="subnav-row">
+        <div class="subnav">
+          @for (s of siblings; track s.link) {
+            <button class="subpill" [class.on]="isCurrent(s.link)" (click)="goSection(s.link)">{{ s.name }}</button>
+          }
+        </div>
+        @if (quickViewable) {
+          <div class="qv-toggle" (click)="toggleQuickView()">
+            Quick view
+            <span class="toggle" [class.on]="quickViewMode()"><span class="knob"></span></span>
+          </div>
+        }
+      </div>
+    }
 
     @if (d.stats?.length) {
       <div class="stats">
         @for (s of d.stats; track s.label) {
-          <div class="stat">
+          <div class="stat" [class.clickable]="statClickable(s)" [class.active]="statActive(s)" (click)="onStat(s)">
             <div class="s-label">{{ s.label }}</div>
-            <div class="mono s-val" [ngClass]="s.tone || 'default'">{{ s.value }}</div>
+            <div class="s-valrow">
+              <span class="mono s-val" [ngClass]="s.tone || 'default'">{{ statValue(s) }}</span>
+              @if (s.pill) {
+                <button class="s-pill" [ngClass]="s.pill.tone || 'good'" [class.on]="pillActive(s)" (click)="onStatPill(s, $event)">
+                  {{ statPillCount(s) }} {{ s.pill.text }}
+                </button>
+              }
+            </div>
+            @if (statActive(s)) { <span class="s-flag">Filtering</span> }
           </div>
         }
       </div>
@@ -20,13 +46,36 @@
     @if (d.kind === 'table') {
       <section class="card">
         <div class="toolbar">
-          <div class="search">
+          <label class="search">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9aa2b2" stroke-width="1.7"/><path d="M20 20l-3.5-3.5" stroke="#9aa2b2" stroke-width="1.7" stroke-linecap="round"/></svg>
-            <span>Search…</span>
-          </div>
-          <button class="chip-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 5h18M6 12h12M10 19h4" stroke="#737b8c" stroke-width="1.7" stroke-linecap="round"/></svg>Filters</button>
+            <input type="text" [value]="query()" (input)="query.set($any($event.target).value)" placeholder="Search…" />
+          </label>
+          @if (d.filterKeys?.length) {
+            <button class="chip-btn" [class.on]="showFilters()" (click)="showFilters.set(!showFilters())"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 5h18M6 12h12M10 19h4" stroke="#737b8c" stroke-width="1.7" stroke-linecap="round"/></svg>Filters</button>
+          }
+          @if (hasFilters()) {
+            <button class="chip-btn clear" (click)="clearAll()">Clear</button>
+          }
           <button class="chip-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Export</button>
+          @if (d.addQuote) {
+            <button class="chip-btn add" (click)="openAdd()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/></svg>Add quote</button>
+          }
         </div>
+
+        @if (showFilters() && d.filterKeys?.length) {
+          <div class="filterbar">
+            @for (key of d.filterKeys; track key) {
+              <label class="fsel">
+                <span>{{ labelFor(key) }}</span>
+                <select [value]="filters()[key] || ''" (change)="onFilterChange(key, $event)">
+                  <option value="">All</option>
+                  @for (opt of options(key); track opt) { <option [value]="opt">{{ opt }}</option> }
+                </select>
+              </label>
+            }
+          </div>
+        }
+
         <div class="tbl-wrap">
           <table>
             <thead>
@@ -35,8 +84,8 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of d.rows; track $index) {
-                <tr>
+              @for (row of rows; track $index) {
+                <tr [class.actionable]="actionable" (click)="rowClick(row)">
                   @for (col of d.columns; track col.key) {
                     <td [style.text-align]="col.align || 'left'">
                       @if (row[col.key]; as cell) {
@@ -52,6 +101,9 @@
                   }
                 </tr>
               }
+              @if (!rows.length) {
+                <tr><td [attr.colspan]="d.columns?.length" class="empty">No results match your search or filters.</td></tr>
+              }
             </tbody>
           </table>
         </div>
@@ -65,7 +117,21 @@
           <div class="rcard">
             <div class="rc-top">
               <div class="rc-ico">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 4v5h5" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                @switch (card.icon) {
+                  @case ('heart') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 20.3l-1.45-1.32C5.4 14.24 2 11.17 2 7.5 2 4.42 4.42 2 7.5 2c1.74 0 3.41.81 4.5 2.09C13.09 2.81 14.76 2 16.5 2 19.58 2 22 4.42 22 7.5c0 3.67-3.4 6.74-8.55 11.49L12 20.3z" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/></svg> }
+                  @case ('tooth') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M7.5 3C5 3 3.5 5 4 8c.4 2.3.8 4 1.4 6.2.5 1.9.8 4.8 2.1 4.8 1.2 0 1-2.5 1.8-4 .4-.8.8-1.2 1.7-1.2s1.3.4 1.7 1.2c.8 1.5.6 4 1.8 4 1.3 0 1.6-2.9 2.1-4.8C18.2 12 18.6 10.3 19 8c.5-3-1-5-3.5-5-1.6 0-2.6.8-3.5.8S9.1 3 7.5 3z" stroke="#6E6FFD" stroke-width="1.5" stroke-linejoin="round"/></svg> }
+                  @case ('piggy') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 12a6 5 0 0 1 6-5h5a6 5 0 0 1 5.8 4.4c.9.2 1.2 1 1.2 1.6s-.5 1.3-1.3 1.4A6 5 0 0 1 17 17.5V20h-3v-1.5H10V20H7v-2.5A6 5 0 0 1 3.6 13H3a1 1 0 0 1 0-2z" stroke="#6E6FFD" stroke-width="1.5" stroke-linejoin="round"/><circle cx="16" cy="12" r="1" fill="#6E6FFD"/><path d="M9 7c0-1.5 1.3-2.5 3-2.5" stroke="#6E6FFD" stroke-width="1.5" stroke-linecap="round"/></svg> }
+                  @case ('umbrella') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3v3M12 21v-8M4 13a8 8 0 0 1 16 0z" stroke="#6E6FFD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20a2 2 0 0 0 3-1.7" stroke="#6E6FFD" stroke-width="1.6" stroke-linecap="round"/></svg> }
+                  @case ('wellness') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-5 3 10 2-5h5" stroke="#6E6FFD" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+                  @case ('gift') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9zM3 7h18v4H3zM12 7V4M12 7c-1 0-3-.3-3-2s2-1.4 3 0c1-1.4 3-1.7 3 0s-2 2-3 2M12 11v10" stroke="#6E6FFD" stroke-width="1.5" stroke-linejoin="round"/></svg> }
+                  @case ('book') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2V4zM18 20a2 2 0 0 0 2-2V6" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 8h7M8 11h7" stroke="#6E6FFD" stroke-width="1.5" stroke-linecap="round"/></svg> }
+                  @case ('laptop') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="11" rx="1.5" stroke="#6E6FFD" stroke-width="1.6"/><path d="M2 20h20" stroke="#6E6FFD" stroke-width="1.6" stroke-linecap="round"/></svg> }
+                  @case ('clipboard') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="5" y="4" width="14" height="17" rx="2" stroke="#6E6FFD" stroke-width="1.6"/><path d="M9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1H9V4z" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 10h8M8 13h8M8 16h5" stroke="#6E6FFD" stroke-width="1.5" stroke-linecap="round"/></svg> }
+                  @case ('cap') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 4l10 5-10 5L2 9l10-5z" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 11v5c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/></svg> }
+                  @case ('users') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="#6E6FFD" stroke-width="1.6"/><path d="M3 20a6 6 0 0 1 12 0M16 5.5a3 3 0 0 1 0 5.5M17 20a6 6 0 0 0-2-4.4" stroke="#6E6FFD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+                  @case ('calendar') { <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="16" rx="2" stroke="#6E6FFD" stroke-width="1.6"/><path d="M4 9h16M8 3v4M16 3v4" stroke="#6E6FFD" stroke-width="1.6" stroke-linecap="round"/></svg> }
+                  @default { <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 4v5h5" stroke="#6E6FFD" stroke-width="1.6" stroke-linejoin="round"/></svg> }
+                }
               </div>
               @if (card.tag) { <span class="rc-tag">{{ card.tag }}</span> }
             </div>
@@ -77,6 +143,36 @@
           </div>
         }
       </div>
+    }
+
+    <!-- CALENDAR -->
+    @if (d.kind === 'calendar') {
+      <section class="card cal">
+        <div class="cal-head">
+          <span class="cal-title">{{ calTitle }}</span>
+          <div class="cal-nav">
+            <button class="cal-btn" (click)="prevMonth()" aria-label="Previous month">‹</button>
+            <button class="cal-btn today" (click)="goToday()">Today</button>
+            <button class="cal-btn" (click)="nextMonth()" aria-label="Next month">›</button>
+            <button class="cal-btn add" (click)="openEvent()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Add event</button>
+          </div>
+        </div>
+        <div class="cal-grid">
+          @for (wd of weekdays; track wd) { <div class="cal-wd">{{ wd }}</div> }
+          @for (week of calWeeks; track $index) {
+            @for (day of week; track $index) {
+              <div class="cal-cell" [class.empty]="!day" [class.today]="day && isToday(day)" [class.done]="day && isDone(day)">
+                @if (day) {
+                  <span class="cal-day">{{ day }}</span>
+                  @for (e of eventsOn(day); track $index) {
+                    <span class="cal-ev" [ngClass]="e.tone">{{ e.label }}</span>
+                  }
+                }
+              </div>
+            }
+          }
+        </div>
+      </section>
     }
 
     <!-- CHAT -->
@@ -114,4 +210,72 @@
   </div>
 } @else {
   <div class="page"><div class="page-head"><h1>Not found</h1><p>This section has no demo data yet.</p></div></div>
+}
+
+@if (showTrack() && trackRow) {
+  <app-tracking-modal [row]="trackRow" (closed)="closeTrack()" (expand)="expandTrack()"></app-tracking-modal>
+}
+@if (showLoad() && loadRow) {
+  <app-load-modal [row]="loadRow" (closed)="closeLoad()" (expand)="expandLoad()"></app-load-modal>
+}
+@if (showCarrier() && carrierDetail) {
+  <app-carrier-modal [detail]="carrierDetail" (closed)="closeCarrier()" (expand)="expandCarrier()"></app-carrier-modal>
+}
+
+@if (showAdd()) {
+  <div class="add-overlay" (click)="cancelAdd()">
+    <div class="add-modal" (click)="$event.stopPropagation()">
+      <div class="am-head">
+        <span>Add quote</span>
+        <button class="am-x" (click)="cancelAdd()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#737b8c" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="am-body">
+        <label class="am-field"><span>Customer</span><input [(ngModel)]="form.cust" placeholder="Customer name" /></label>
+        <label class="am-field"><span>Lane</span><input [(ngModel)]="form.lane" placeholder="Origin → Destination" /></label>
+        <label class="am-field"><span>Amount</span><input [(ngModel)]="form.amount" placeholder="0" inputmode="decimal" /></label>
+        <label class="am-field"><span>Currency</span>
+          <select [(ngModel)]="form.curr">
+            <option value="USD">USD</option>
+            <option value="CAD">CAD</option>
+          </select>
+        </label>
+        <label class="am-field"><span>Status</span>
+          <select [(ngModel)]="form.status">
+            <option value="Open">Open</option>
+            <option value="Quoting">Quoting</option>
+          </select>
+        </label>
+      </div>
+      <div class="am-foot">
+        <button class="am-btn ghost" (click)="cancelAdd()">Cancel</button>
+        <button class="am-btn primary" (click)="saveQuote()">Add quote</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showEvent()) {
+  <div class="add-overlay" (click)="cancelEvent()">
+    <div class="add-modal" (click)="$event.stopPropagation()">
+      <div class="am-head">
+        <span>Add event · {{ calTitle }}</span>
+        <button class="am-x" (click)="cancelEvent()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#737b8c" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="am-body">
+        <label class="am-field"><span>Title</span><input [(ngModel)]="evForm.title" placeholder="Event title" /></label>
+        <label class="am-field"><span>Day of month</span><input type="number" min="1" max="31" [(ngModel)]="evForm.day" /></label>
+        <label class="am-field"><span>Importance</span>
+          <select [(ngModel)]="evForm.importance">
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </label>
+      </div>
+      <div class="am-foot">
+        <button class="am-btn ghost" (click)="cancelEvent()">Cancel</button>
+        <button class="am-btn primary" (click)="saveEvent()">Add event</button>
+      </div>
+    </div>
+  </div>
 }

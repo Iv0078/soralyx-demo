@@ -12,8 +12,7 @@
         <span>Carrier profile</span>
       </div>
       <div class="tb-controls">
-        <button class="tb-btn" aria-label="Minimize"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="#737b8c" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-        <button class="tb-btn" aria-label="Maximize"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="#737b8c" stroke-width="1.8"/></svg></button>
+        <button class="tb-btn" (click)="expand.emit()" aria-label="Expand to page" title="Open as page"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5M20 15v5h-5M4 20l6-6M20 4l-6 6" stroke="#737b8c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="tb-btn danger" (click)="close()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#e5484d" stroke-width="1.9" stroke-linecap="round"/></svg></button>
       </div>
     </div>

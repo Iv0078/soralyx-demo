@@ -32,7 +32,7 @@ export class LoginComponent {
       const ok = this.auth.login(this.username, this.password);
       this.loading.set(false);
       if (ok) {
-        this.router.navigateByUrl('/quotes');
+        this.router.navigateByUrl('/section/customer-quotes');
       } else {
         this.error.set('Incorrect username or password.');
       }

@@ -1,0 +1,184 @@
+<div class="overlay" [class.inline]="inline" (click)="close()">
+  <div class="window" [class.inline]="inline" (click)="$event.stopPropagation()">
+    <!-- title bar -->
+    @if (!inline) {
+    <div class="titlebar">
+      <div class="tb-left">
+        <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+          <defs><linearGradient id="tkm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6E6FFD"/><stop offset="1" stop-color="#3396CD"/></linearGradient></defs>
+          <g stroke="url(#tkm)" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M16 28V12"/><path d="M16 18C10.5 18 8.6 13.8 9.4 9.2"/><path d="M16 16.5L21 14"/></g>
+          <circle cx="16" cy="8.2" r="3" fill="url(#tkm)"/><circle cx="22.6" cy="12.6" r="2.4" fill="url(#tkm)"/>
+        </svg>
+        <span>Shipment tracking</span>
+      </div>
+      <div class="tb-controls">
+        <button class="tb-btn" (click)="expand.emit()" aria-label="Expand to page" title="Open as page"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5M20 15v5h-5M4 20l6-6M20 4l-6 6" stroke="#737b8c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="tb-btn danger" (click)="close()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#e5484d" stroke-width="1.9" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>
+    }
+
+    <!-- header: load + status -->
+    @if (!inline) {
+    <div class="head">
+      <span class="mono load">{{ val('load') }}</span>
+      <span class="pill" [ngClass]="statusTone()">{{ status() }}</span>
+    </div>
+    }
+
+    <div class="body">
+      <!-- carrier note for delayed / cancelled -->
+      @if (isAlert) {
+        <div class="note-alert" [ngClass]="statusTone()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16.5v.5" [attr.stroke]="statusTone()==='bad' ? '#e5484d' : '#b7791f'" stroke-width="2" stroke-linecap="round"/><path d="M10.3 3.9L2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" [attr.stroke]="statusTone()==='bad' ? '#e5484d' : '#b7791f'" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div>
+            <div class="na-title">Carrier note — {{ status() }}</div>
+            <div class="na-text">{{ detail() }}</div>
+          </div>
+        </div>
+      }
+
+      <div class="tk-left">
+      <!-- map -->
+      <div class="map">
+        <svg viewBox="0 0 640 220" preserveAspectRatio="xMidYMid slice">
+          <rect x="0" y="0" width="640" height="220" fill="#eef1fb"/>
+          <!-- faint grid / roads -->
+          <g stroke="#dfe4f4" stroke-width="1">
+            <line x1="0" y1="55" x2="640" y2="55"/><line x1="0" y1="110" x2="640" y2="110"/><line x1="0" y1="165" x2="640" y2="165"/>
+            <line x1="160" y1="0" x2="160" y2="220"/><line x1="320" y1="0" x2="320" y2="220"/><line x1="480" y1="0" x2="480" y2="220"/>
+          </g>
+          <path d="M20 30 L120 120 L240 60 L420 140 L620 90" stroke="#e3e7f5" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.7"/>
+          <!-- route -->
+          <path d="M60,150 Q320,42 580,84" stroke="#b9c0e8" stroke-width="3" stroke-dasharray="7 6" fill="none" stroke-linecap="round"/>
+          <!-- origin -->
+          <circle cx="60" cy="150" r="7" fill="#6E6FFD"/>
+          <circle cx="60" cy="150" r="12" fill="#6E6FFD" opacity="0.18"/>
+          <!-- destination pin -->
+          <path d="M580 66c-8 0-14 6-14 14 0 10 14 22 14 22s14-12 14-22c0-8-6-14-14-14z" fill="#e5484d"/>
+          <circle cx="580" cy="80" r="5" fill="#fff"/>
+          <!-- truck -->
+          <g [attr.transform]="'translate(' + truckX + ',' + truckY + ') rotate(' + truckAngle + ')'">
+            <circle r="16" fill="#fff" stroke="#6E6FFD" stroke-width="2"/>
+            <g transform="translate(-9,-6)">
+              <path d="M0 2h11v8H0zM11 4h4l3 3v3h-7z" fill="#6E6FFD"/>
+              <circle cx="4" cy="11" r="1.8" fill="#3b3f52"/><circle cx="14" cy="11" r="1.8" fill="#3b3f52"/>
+            </g>
+          </g>
+          <!-- arrow ahead toward destination -->
+          <path d="M540 92 l16 -6 -4 8 6 6 -18 4z" fill="#e5484d" opacity="0.9"/>
+        </svg>
+        <div class="map-badge"><span class="mono">{{ pct }}%</span> to destination</div>
+        <div class="map-city origin">{{ origin }}</div>
+        <div class="map-city dest">{{ dest }}</div>
+      </div>
+
+      <!-- lane + delivery + refresh -->
+      <div class="lane-row">
+        <div class="lane-info">
+          <div class="li-block">
+            <span class="li-label">Lane</span>
+            <span class="li-val">{{ val('lane') }}</span>
+          </div>
+          <div class="li-block">
+            <span class="li-label">Delivery date</span>
+            <span class="li-val mono">{{ val('eta') }}</span>
+          </div>
+        </div>
+        <button class="refresh" (click)="refresh()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 1 0-2 6M20 5v6h-6" stroke="#6E6FFD" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      </div><!-- /tk-left -->
+
+      <div class="tk-right">
+      <!-- contacts (carrier + client) -->
+      <div class="contacts">
+        <div class="contact">
+          <div class="ct-head"><span class="ct-role">Carrier</span></div>
+          <div class="ct-name">{{ val('carrier') }}</div>
+          @if (val('phone')) {
+            <span class="ct-line"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 4h3.5l1.6 4-2 1.4a11 11 0 0 0 4.9 4.9l1.4-2 4 1.6V18a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 3 6.2 2 2 0 0 1 5 4z" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="mono">{{ val('phone') }}</span></span>
+          }
+          @if (val('carrierEmail')) {
+            <span class="ct-line mail"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#9aa2b2" stroke-width="1.6"/><path d="M4 6l8 6 8-6" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{ val('carrierEmail') }}</span></span>
+          }
+        </div>
+        <div class="contact">
+          <div class="ct-head"><span class="ct-role client">Client</span></div>
+          <div class="ct-name">{{ val('client') }}</div>
+          @if (val('clientPhone')) {
+            <span class="ct-line"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 4h3.5l1.6 4-2 1.4a11 11 0 0 0 4.9 4.9l1.4-2 4 1.6V18a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 3 6.2 2 2 0 0 1 5 4z" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="mono">{{ val('clientPhone') }}</span></span>
+          }
+          @if (val('clientEmail')) {
+            <span class="ct-line mail"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#9aa2b2" stroke-width="1.6"/><path d="M4 6l8 6 8-6" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{ val('clientEmail') }}</span></span>
+          }
+        </div>
+      </div>
+      <!-- automated tracing -->
+      <div class="auto">
+        <div class="auto-title">Automated tracing</div>
+        <div class="auto-rows">
+          <label class="auto-row">
+            <span class="ar-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#737b8c" stroke-width="1.6"/><path d="M4 6l8 6 8-6" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Email updates
+            </span>
+            <button type="button" class="toggle" [class.on]="autoEmail()" (click)="autoEmail.set(!autoEmail())"><span class="knob"></span></button>
+          </label>
+          <label class="auto-row">
+            <span class="ar-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 4h3.5l1.6 4-2 1.4a11 11 0 0 0 4.9 4.9l1.4-2 4 1.6V18a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 3 6.2 2 2 0 0 1 5 4z" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Phone / SMS updates
+            </span>
+            <button type="button" class="toggle" [class.on]="autoPhone()" (click)="autoPhone.set(!autoPhone())"><span class="knob"></span></button>
+          </label>
+        </div>
+      </div>
+
+      <!-- update status & notes -->
+      <div class="statuspanel">
+        <div class="sp-head">Update status &amp; notes</div>
+        <div class="sp-status">
+          <label class="sp-field grow">
+            <span>Shipment status</span>
+            <select [ngModel]="status()" (ngModelChange)="status.set($event)">
+              @for (s of statusOptions; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+          </label>
+          <button class="sp-save" [class.done]="saved()" (click)="saveStatus()">
+            @if (saved()) {
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l4.5 4.5L19 7" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Saved
+            } @else { Save status }
+          </button>
+        </div>
+        @if (needsDetail) {
+          <label class="sp-field detail">
+            <span>Carrier details / reason <em>(shown to the customer)</em></span>
+            <textarea rows="3" [ngModel]="detail()" (ngModelChange)="detail.set($event)" placeholder="e.g. Delayed by weather on I-40; ETA pushed ~4 hours."></textarea>
+          </label>
+        }
+        @if (notes().length) {
+          <div class="sp-notes">
+            @for (n of notes(); track $index) {
+              <div class="sp-note">
+                <span class="n-av" [style.background]="n.color">{{ n.initials }}</span>
+                <div class="n-body">
+                  <div class="n-head"><b>{{ n.who }}</b><span>{{ n.time }}</span></div>
+                  <div class="n-text">{{ n.text }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+        <div class="sp-add">
+          <input [(ngModel)]="draft" (keyup.enter)="addNote()" placeholder="Leave a note…" />
+          <button (click)="addNote()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+      </div><!-- /tk-right -->
+    </div>
+  </div>
+</div>

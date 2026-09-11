@@ -17,6 +17,7 @@
   --line: #e7e9f2;
   --line-2: #eef0f6;
   --surface: #ffffff;
+  --surface-2: #f7f8fc;
   --bg: #f4f5fb;
 
   /* Functional (alerts only) */
@@ -28,6 +29,26 @@
   --warn: #b7791f;
   --warn-soft: #fdf3e3;
 }
+
+/* Dark mode */
+:root[data-theme="dark"] {
+  --brand-purple-soft: #262a52;
+  --brand-blue-soft: #17303f;
+  --ink: #e7eaf3;
+  --ink-2: #c4cad8;
+  --muted: #8b93a6;
+  --muted-2: #6c7488;
+  --line: #2b3346;
+  --line-2: #232b3d;
+  --surface: #1b2334;
+  --surface-2: #232c40;
+  --bg: #10151f;
+  --danger-soft: #3a2130;
+  --danger-line: #59313e;
+  --warn-soft: #3a3120;
+  --success: #34cf8a;
+}
+:root[data-theme="dark"] body { color: var(--ink); background: var(--bg); }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }

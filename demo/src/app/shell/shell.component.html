@@ -1,8 +1,11 @@
 <header class="appbar">
   <div class="ab-left">
-    <a class="brand" routerLink="/quotes"><soralyx-logo variant="light" [size]="24"></soralyx-logo></a>
+    <a class="brand" routerLink="/section/customer-quotes"><soralyx-logo variant="light" [size]="24"></soralyx-logo></a>
     <nav class="nav">
       @for (m of navMenus; track m.label; let i = $index) {
+        @if (m.link) {
+          <a class="nav-item" [class.active]="isMenuActive(m)" [routerLink]="m.link" (click)="onItemClick()">{{ m.label }}</a>
+        } @else {
         <div class="nav-menu">
           <span class="nav-item" [class.active]="isMenuActive(m)" [class.open]="openMenu() === i" (click)="toggleMenu(i, $event)">
             {{ m.label }}
@@ -21,18 +24,37 @@
             </div>
           }
         </div>
+        }
       }
     </nav>
   </div>
 
   <div class="ab-right">
-    <div class="search">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="rgba(255,255,255,.7)" stroke-width="1.7"/><path d="M20 20l-3.5-3.5" stroke="rgba(255,255,255,.7)" stroke-width="1.7" stroke-linecap="round"/></svg>
-      <span>Search load or carrier</span>
-    </div>
-    <div class="bell">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M14 21a2 2 0 0 1-4 0" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span class="dot"></span>
+    <div class="bellwrap">
+      <button class="bell" (click)="toggleNotif($event)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M14 21a2 2 0 0 1-4 0" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        @if (notifications().length) { <span class="dot"></span> }
+      </button>
+      @if (notifOpen()) {
+        <div class="notif-menu" (click)="$event.stopPropagation()">
+          <div class="nm-head">Notifications</div>
+          @for (n of notifications(); track n.title; let i = $index) {
+            <div class="nm-item" [ngClass]="n.tone">
+              <span class="nm-mark"></span>
+              <div class="nm-body">
+                <div class="nm-title">{{ n.title }} <span class="nm-time">{{ n.time }}</span></div>
+                <div class="nm-text">{{ n.text }}</div>
+              </div>
+              <button class="nm-x" (click)="dismissNotif(i, $event)" aria-label="Dismiss">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#9aa2b2" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          }
+          @if (!notifications().length) {
+            <div class="nm-empty">You're all caught up.</div>
+          }
+        </div>
+      }
     </div>
 
     <!-- account menu -->
@@ -46,6 +68,17 @@
               <span class="acc-name">{{ user }}</span>
               <span class="acc-mail">{{ user }}&#64;soralyx.com</span>
             </div>
+          </div>
+          <div class="acc-sep"></div>
+          <div class="acc-toggle">
+            <span class="at-left">
+              @if (theme() === 'dark') {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" stroke="#a3a9bd" stroke-width="1.6" stroke-linejoin="round"/></svg> Dark mode
+              } @else {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="#737b8c" stroke-width="1.6"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round"/></svg> Day mode
+              }
+            </span>
+            <button class="tgl" [class.on]="theme() === 'dark'" (click)="toggleTheme($event)"><span class="knob"></span></button>
           </div>
           <div class="acc-sep"></div>
           <button class="acc-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#737b8c" stroke-width="1.6"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round"/></svg>My account</button>

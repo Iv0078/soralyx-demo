@@ -29,7 +29,7 @@
 
 .dropdown {
   position: absolute; top: calc(100% - 6px); left: 4px; z-index: 60;
-  min-width: 214px; background: #fff; border: 1px solid var(--line);
+  min-width: 214px; background: var(--surface); border: 1px solid var(--line);
   border-radius: 10px; box-shadow: 0 12px 34px rgba(27,33,48,0.16); padding: 6px;
 }
 .dd-item {
@@ -54,14 +54,23 @@
 /* Quote header */
 .qhead {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 28px; background: #fff; border-bottom: 1px solid var(--line);
+  padding: 18px 28px; background: var(--surface); border-bottom: 1px solid var(--line);
 }
 .qh-id { display: flex; align-items: center; gap: 16px; }
+.backbtn { width: 36px; height: 36px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.backbtn:hover { background: var(--surface-2); border-color: #d7dbe8; }
 .qh-num { display: flex; flex-direction: column; gap: 4px; }
 .eyebrow { font-size: 11.5px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
 .num { font-size: 23px; font-weight: 700; color: var(--ink); letter-spacing: 0.03em; }
 .status-pill { align-self: flex-end; }
+.status-pill.warn { background: var(--warn-soft); color: var(--warn); }
+.status-pill.warn .dot { background: var(--warn); }
+.status-pill.good { background: #eafaf2; color: var(--success); }
+.status-pill.good .dot { background: var(--success); }
+.status-pill.info { background: var(--brand-purple-soft); color: var(--brand-purple-dark); }
+.status-pill.info .dot { background: var(--brand-purple); }
 .qh-actions { display: flex; align-items: center; gap: 10px; }
+.edit-actions { display: flex; align-items: center; gap: 8px; }
 
 /* Body layout */
 .body { display: flex; gap: 24px; padding: 24px 28px; align-items: flex-start; }
@@ -78,7 +87,7 @@
 .seg { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 12.5px; }
 .seg span { padding: 7px 12px; color: var(--muted); font-weight: 500; }
 .seg .on { background: var(--brand-purple); color: #fff; }
-.chip-btn { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-family: inherit; font-size: 12.5px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+.chip-btn { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font-family: inherit; font-size: 12.5px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
 .chart { width: 100%; margin-top: 8px; }
 .chart svg { width: 100%; height: auto; display: block; }
 
@@ -92,6 +101,8 @@
 .ic-val { font-size: 15px; font-weight: 700; color: var(--ink); }
 .delta { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 500; }
 .delta.up { color: var(--danger); }
+.delta.down { color: var(--muted); }
+.indiv-card .ic-name em { font-style: normal; color: var(--muted); font-weight: 500; }
 
 /* Carrier quotes table */
 .cq-head { padding: 18px 24px 14px; border-bottom: 1px solid var(--line-2); }
@@ -101,16 +112,16 @@
 .cbox { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #cdd2e0; display: inline-flex; align-items: center; justify-content: center; }
 .cbox.on { background: var(--brand-purple); border-color: var(--brand-purple); }
 .cbox.ind { background: var(--brand-purple); border-color: var(--brand-purple); }
-.cbox .dash { width: 9px; height: 2px; background: #fff; border-radius: 1px; }
+.cbox .dash { width: 9px; height: 2px; background: var(--surface); border-radius: 1px; }
 
 .tbl-head, .tbl-row {
   display: grid; grid-template-columns: minmax(0,1fr) 100px 60px 92px 176px 44px; gap: 12px;
   padding: 12px 24px; align-items: center;
 }
-.tbl-head { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted-2); background: #fafbff; }
+.tbl-head { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted-2); background: var(--surface-2); }
 .tbl-head .grp { background: #f1f2fb; border-radius: 5px; padding: 2px 8px; }
 .tbl-row { border-top: 1px solid var(--line-2); cursor: pointer; }
-.tbl-row:hover { background: #fafbff; }
+.tbl-row:hover { background: var(--surface-2); }
 .tbl-row.sel { background: #f6f6ff; box-shadow: inset 3px 0 0 var(--brand-purple); }
 .c { text-align: center; } .r { text-align: right; }
 
@@ -141,9 +152,11 @@
 .field span { font-size: 11.5px; font-weight: 500; color: var(--muted); }
 .field input {
   height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
-  font-family: inherit; font-size: 13px; color: var(--ink); background: #fff; outline: none;
+  font-family: inherit; font-size: 13px; color: var(--ink); background: var(--surface); outline: none;
 }
 .field input:focus { border-color: var(--brand-purple); box-shadow: 0 0 0 3px rgba(110,111,253,0.12); }
+.field input.ro { background: #f5f6fa; color: var(--muted); border-color: var(--line-2); cursor: pointer; }
+.field input.ro:hover { border-color: #d7dbe8; }
 
 /* Pricing */
 .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
@@ -156,7 +169,7 @@
 .pfield em { font-size: 11px; color: var(--muted); font-style: normal; }
 .more-arrow { display: flex; justify-content: flex-end; margin-top: 10px; }
 
-.acc { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding: 11px 12px; background: #fafbff; border: 1px solid var(--line-2); border-radius: 8px; font-size: 12.5px; color: var(--muted); }
+.acc { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding: 11px 12px; background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 8px; font-size: 12.5px; color: var(--muted); }
 .acc em { color: var(--muted-2); font-style: normal; }
 .acc .mono { color: var(--ink); font-size: 13px; }
 .allin { display: flex; align-items: baseline; justify-content: space-between; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-2); }
