@@ -1,96 +1,106 @@
-<header class="appbar">
-  <div class="ab-left">
-    <a class="brand" routerLink="/section/customer-quotes"><soralyx-logo variant="light" [size]="24"></soralyx-logo></a>
-    <nav class="nav">
-      @for (m of navMenus; track m.label; let i = $index) {
-        @if (m.link) {
-          <a class="nav-item" [class.active]="isMenuActive(m)" [routerLink]="m.link" (click)="onItemClick()">{{ m.label }}</a>
-        } @else {
-        <div class="nav-menu">
-          <span class="nav-item" [class.active]="isMenuActive(m)" [class.open]="openMenu() === i" (click)="toggleMenu(i, $event)">
-            {{ m.label }}
-            <svg class="caret" [class.up]="openMenu() === i" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" [attr.stroke]="isMenuActive(m) ? 'rgba(255,255,255,.9)' : 'rgba(255,255,255,.6)'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          @if (openMenu() === i) {
-            <div class="dropdown" (click)="$event.stopPropagation()">
-              @for (it of m.items; track it.name) {
-                <a class="dd-item" [class.sel]="isItemActive(it.link)" [routerLink]="it.link" (click)="onItemClick()">
-                  <span>{{ it.name }}</span>
-                  @if (isItemActive(it.link)) {
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l4.5 4.5L19 7" stroke="#6E6FFD" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  }
-                </a>
-              }
-            </div>
-          }
-        </div>
-        }
-      }
-    </nav>
-  </div>
+<div class="layout">
 
-  <div class="ab-right">
-    <div class="bellwrap">
-      <button class="bell" (click)="toggleNotif($event)">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M14 21a2 2 0 0 1-4 0" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        @if (notifications().length) { <span class="dot"></span> }
-      </button>
-      @if (notifOpen()) {
-        <div class="notif-menu" (click)="$event.stopPropagation()">
-          <div class="nm-head">Notifications</div>
-          @for (n of notifications(); track n.title; let i = $index) {
-            <div class="nm-item" [ngClass]="n.tone">
-              <span class="nm-mark"></span>
-              <div class="nm-body">
-                <div class="nm-title">{{ n.title }} <span class="nm-time">{{ n.time }}</span></div>
-                <div class="nm-text">{{ n.text }}</div>
+  <!-- white top bar: brand + bell/avatar -->
+  <header class="topbar">
+    <a class="brand" routerLink="/section/customer-quotes"><soralyx-logo variant="gradient" [size]="28"></soralyx-logo></a>
+
+    <div class="tb-right">
+      <div class="bellwrap">
+        <button class="bell" (click)="toggleNotif($event)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M14 21a2 2 0 0 1-4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          @if (notifications().length) { <span class="dot"></span> }
+        </button>
+        @if (notifOpen()) {
+          <div class="notif-menu" (click)="$event.stopPropagation()">
+            <div class="nm-head">Notifications</div>
+            @for (n of notifications(); track n.title; let i = $index) {
+              <div class="nm-item" [ngClass]="n.tone">
+                <span class="nm-mark"></span>
+                <div class="nm-body">
+                  <div class="nm-title">{{ n.title }} <span class="nm-time">{{ n.time }}</span></div>
+                  <div class="nm-text">{{ n.text }}</div>
+                </div>
+                <button class="nm-x" (click)="dismissNotif(i, $event)" aria-label="Dismiss">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#9aa2b2" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </button>
               </div>
-              <button class="nm-x" (click)="dismissNotif(i, $event)" aria-label="Dismiss">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#9aa2b2" stroke-width="1.8" stroke-linecap="round"/></svg>
-              </button>
-            </div>
-          }
-          @if (!notifications().length) {
-            <div class="nm-empty">You're all caught up.</div>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- account menu -->
-    <div class="account">
-      <button class="avatar" (click)="toggleAccount($event)">{{ initial }}</button>
-      @if (accountOpen()) {
-        <div class="acc-menu" (click)="$event.stopPropagation()">
-          <div class="acc-head">
-            <div class="acc-av">{{ initial }}</div>
-            <div class="acc-id">
-              <span class="acc-name">{{ user }}</span>
-              <span class="acc-mail">{{ user }}&#64;soralyx.com</span>
-            </div>
+            }
+            @if (!notifications().length) {
+              <div class="nm-empty">You're all caught up.</div>
+            }
           </div>
-          <div class="acc-sep"></div>
-          <div class="acc-toggle">
-            <span class="at-left">
-              @if (theme() === 'dark') {
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" stroke="#a3a9bd" stroke-width="1.6" stroke-linejoin="round"/></svg> Dark mode
-              } @else {
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="#737b8c" stroke-width="1.6"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round"/></svg> Day mode
+        }
+      </div>
+
+      <!-- account menu -->
+      <div class="account">
+        <button class="avatar" (click)="toggleAccount($event)">{{ initial }}</button>
+        @if (accountOpen()) {
+          <div class="acc-menu" (click)="$event.stopPropagation()">
+            <div class="acc-head">
+              <div class="acc-av">{{ initial }}</div>
+              <div class="acc-id">
+                <span class="acc-name">{{ user }}</span>
+                <span class="acc-mail">{{ user }}&#64;soralyx.com</span>
+              </div>
+            </div>
+            <div class="acc-sep"></div>
+            <div class="acc-toggle">
+              <span class="at-left">
+                @if (theme() === 'dark') {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" stroke="#a3a9bd" stroke-width="1.6" stroke-linejoin="round"/></svg> Dark mode
+                } @else {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="#737b8c" stroke-width="1.6"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round"/></svg> Day mode
+                }
+              </span>
+              <button class="tgl" [class.on]="theme() === 'dark'" (click)="toggleTheme($event)"><span class="knob"></span></button>
+            </div>
+            <div class="acc-sep"></div>
+            <button class="acc-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#737b8c" stroke-width="1.6"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round"/></svg>My account</button>
+            <button class="acc-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="#737b8c" stroke-width="1.6"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L4 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5c.1-.3.1-.7.1-1z" stroke="#737b8c" stroke-width="1.4" stroke-linejoin="round"/></svg>Settings</button>
+            <div class="acc-sep"></div>
+            <button class="acc-item danger" (click)="signOut()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 12H4M8 8l-4 4 4 4M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" stroke="#e5484d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign out</button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- gradient nav bar (full width, above the rail) -->
+  <nav class="navbar">
+        @for (m of navMenus; track m.label; let i = $index) {
+          @if (m.link) {
+            <a class="nav-item" [class.active]="isMenuActive(m)" [routerLink]="m.link" (click)="onItemClick()">{{ m.label }}</a>
+          } @else {
+            <div class="nav-menu">
+              <span class="nav-item" [class.active]="isMenuActive(m)" [class.open]="openMenu() === i" (click)="toggleMenu(i, $event)">
+                {{ m.label }}
+                <svg class="caret" [class.up]="openMenu() === i" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" [attr.stroke]="isMenuActive(m) ? 'rgba(255,255,255,.9)' : 'rgba(255,255,255,.6)'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              @if (openMenu() === i) {
+                <div class="dropdown" (click)="$event.stopPropagation()">
+                  @for (it of m.items; track it.name) {
+                    <a class="dd-item" [class.sel]="isItemActive(it.link)" [routerLink]="it.link" (click)="onItemClick()">
+                      <span>{{ it.name }}</span>
+                      @if (isItemActive(it.link)) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l4.5 4.5L19 7" stroke="#6E6FFD" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      }
+                    </a>
+                  }
+                </div>
               }
-            </span>
-            <button class="tgl" [class.on]="theme() === 'dark'" (click)="toggleTheme($event)"><span class="knob"></span></button>
-          </div>
-          <div class="acc-sep"></div>
-          <button class="acc-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#737b8c" stroke-width="1.6"/><path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round"/></svg>My account</button>
-          <button class="acc-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="#737b8c" stroke-width="1.6"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a7 7 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L4 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5c.1-.3.1-.7.1-1z" stroke="#737b8c" stroke-width="1.4" stroke-linejoin="round"/></svg>Settings</button>
-          <div class="acc-sep"></div>
-          <button class="acc-item danger" (click)="signOut()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 12H4M8 8l-4 4 4 4M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" stroke="#e5484d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Sign out</button>
-        </div>
-      }
-    </div>
-  </div>
-</header>
+            </div>
+          }
+        }
+  </nav>
 
-<main class="content">
-  <router-outlet></router-outlet>
-</main>
+  <!-- rail (left) + content; the rail sits below the nav bar -->
+  <div class="body">
+    <app-sidebar-rail></app-sidebar-rail>
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+  <footer class="appfoot">Soralyx &copy; {{ year }}</footer>
+</div>

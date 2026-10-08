@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { EmailModalComponent } from './email-modal.component';
 
 @Component({
@@ -7,6 +7,12 @@ import { EmailModalComponent } from './email-modal.component';
   imports: [EmailModalComponent],
   template: `
     <div class="acts">
+      @if (showOriginLog) {
+        <button class="btn ghost" (click)="originLog.emit()" title="How this quote originated">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3v-3H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" stroke="#737b8c" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Origin log
+        </button>
+      }
       <button class="btn ghost">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#737b8c" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Activity log
@@ -38,5 +44,7 @@ export class DetailActionsComponent {
   @Input() emailTo = 'dispatch@soralyx.com';
   @Input() emailSubject = '';
   @Input() emailBody = '';
+  @Input() showOriginLog = false;          // show the "Origin log" button (AI-made items)
+  @Output() originLog = new EventEmitter<void>();
   showEmail = signal(false);
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Cell } from './mock-data';
+import { AiProof } from './ai-proof';
 
 export interface CarrierBid {
   lane?: string;
@@ -27,4 +28,6 @@ export class DetailContextService {
   loadRow: Record<string, Cell> | null = null;
   traceRow: Record<string, Cell> | null = null;
   carrier: CarrierCtx | null = null;
+  // AI dispatch proof to overlay on the full detail page (null = not AI-made)
+  aiProof: AiProof | null = null;
 }

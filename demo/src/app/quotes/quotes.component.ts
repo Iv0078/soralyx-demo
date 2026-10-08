@@ -8,11 +8,13 @@ import { Carrier, CarrierDetail } from './models';
 import { EmailModalComponent } from '../shared/email-modal.component';
 import { Router } from '@angular/router';
 import { DetailContextService } from '../sections/detail-context.service';
+import { AiCallModalComponent } from '../sections/ai-call-modal.component';
+import { AiProof } from '../sections/ai-proof';
 
 @Component({
   selector: 'app-quotes',
   standalone: true,
-  imports: [NgClass, DecimalPipe, FormsModule, CarrierModalComponent, EmailModalComponent],
+  imports: [NgClass, DecimalPipe, FormsModule, CarrierModalComponent, EmailModalComponent, AiCallModalComponent],
   templateUrl: './quotes.component.html',
   styleUrl: './quotes.component.scss',
 })
@@ -156,7 +158,12 @@ export class QuotesComponent {
       if (ctx.current.currency) this.currency.set(ctx.current.currency);
       this.applyQuote(this.parseAmount(ctx.current.amount), ctx.current.origin || '', ctx.current.destination || '');
     }
+    this.aiProof = ctx.aiProof;   // opened via the "Origin log" button, not automatically
   }
+  // AI dispatch proof (email chain / transcript), shown on top when AI-made
+  aiProof: AiProof | null = null;
+  showAi = signal(false);
+  closeAi() { this.showAi.set(false); }
   back() { this.location.back(); }
 
   notes = [

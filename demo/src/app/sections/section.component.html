@@ -1,5 +1,11 @@
 @if (data; as d) {
   <div class="page">
+    @if (d.backTo) {
+      <button class="backbtn" type="button" (click)="goBack()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back
+      </button>
+    }
     <div class="topbar">
       <div class="tb-name">
         <h1>{{ d.title }}</h1>
@@ -23,7 +29,7 @@
       </div>
     }
 
-    @if (d.stats?.length) {
+    @if (d.stats?.length && !showBoards) {
       <div class="stats">
         @for (s of d.stats; track s.label) {
           <div class="stat" [class.clickable]="statClickable(s)" [class.active]="statActive(s)" (click)="onStat(s)">
@@ -44,69 +50,31 @@
 
     <!-- TABLE -->
     @if (d.kind === 'table') {
-      <section class="card">
-        <div class="toolbar">
-          <label class="search">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9aa2b2" stroke-width="1.7"/><path d="M20 20l-3.5-3.5" stroke="#9aa2b2" stroke-width="1.7" stroke-linecap="round"/></svg>
-            <input type="text" [value]="query()" (input)="query.set($any($event.target).value)" placeholder="Search…" />
-          </label>
-          @if (d.filterKeys?.length) {
-            <button class="chip-btn" [class.on]="showFilters()" (click)="showFilters.set(!showFilters())"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 5h18M6 12h12M10 19h4" stroke="#737b8c" stroke-width="1.7" stroke-linecap="round"/></svg>Filters</button>
-          }
-          @if (hasFilters()) {
-            <button class="chip-btn clear" (click)="clearAll()">Clear</button>
-          }
-          <button class="chip-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14" stroke="#737b8c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Export</button>
-          @if (d.addQuote) {
-            <button class="chip-btn add" (click)="openAdd()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/></svg>Add quote</button>
-          }
+      @if (showBoards) {
+        <div class="boards">
+          <a class="board" routerLink="/section/pending-documents">
+            <span class="bicon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v4h4M8 13h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="btxt"><span class="btitle">Pending documents</span><span class="bsub">Awaiting review or approval</span></span>
+          </a>
+          <a class="board" routerLink="/section/carrier-insurance">
+            <span class="bicon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.4-3 8-7 10-4-2-7-5.6-7-10V6l7-3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="btxt"><span class="btitle">Carrier insurance</span><span class="bsub">Expiring or expired</span></span>
+          </a>
+          <a class="board" routerLink="/section/pending-quotes">
+            <span class="bicon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3v-3H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+            <span class="btxt"><span class="btitle">Pending quotes</span><span class="bsub">Auto &amp; manual bidding</span></span>
+          </a>
+          <a class="board" routerLink="/section/automated-loadboard">
+            <span class="bicon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7h11v8H3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 10h4l3 3v2h-7z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7" cy="17" r="1.6" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="17" r="1.6" stroke="currentColor" stroke-width="1.7"/></svg></span>
+            <span class="btxt"><span class="btitle">Automated loadboard</span><span class="bsub">Auto-matched external loads</span></span>
+          </a>
         </div>
-
-        @if (showFilters() && d.filterKeys?.length) {
-          <div class="filterbar">
-            @for (key of d.filterKeys; track key) {
-              <label class="fsel">
-                <span>{{ labelFor(key) }}</span>
-                <select [value]="filters()[key] || ''" (change)="onFilterChange(key, $event)">
-                  <option value="">All</option>
-                  @for (opt of options(key); track opt) { <option [value]="opt">{{ opt }}</option> }
-                </select>
-              </label>
-            }
-          </div>
-        }
-
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                @for (col of d.columns; track col.key) { <th [style.text-align]="col.align || 'left'">{{ col.label }}</th> }
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of rows; track $index) {
-                <tr [class.actionable]="actionable" (click)="rowClick(row)">
-                  @for (col of d.columns; track col.key) {
-                    <td [style.text-align]="col.align || 'left'">
-                      @if (row[col.key]; as cell) {
-                        @if (cell.tone === 'info' && cell.mono) {
-                          <span class="mono idlink">{{ cell.text }}</span>
-                        } @else if (cell.tone) {
-                          <span class="pill" [ngClass]="cell.tone">{{ cell.text }}</span>
-                        } @else {
-                          <span [class.mono]="cell.mono" [class.strong]="cell.strong">{{ cell.text }}</span>
-                        }
-                      }
-                    </td>
-                  }
-                </tr>
-              }
-              @if (!rows.length) {
-                <tr><td [attr.colspan]="d.columns?.length" class="empty">No results match your search or filters.</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
+      }
+      <section class="card tablecard">
+        <app-filter [columns]="webColumns" [rangeDates]="rangeDates"
+                    [showAdd]="!!d.addQuote" [addLabel]="d.addQuote ? 'Add quote' : 'New item'"
+                    (filter)="applyWeb($event)" (add)="onWebAdd($event)"></app-filter>
+        <app-table [columns]="webColumns" [rows]="webRows" [navigate]="false" (rowClick)="onWebRow($event)"></app-table>
       </section>
     }
 
@@ -161,7 +129,7 @@
           @for (wd of weekdays; track wd) { <div class="cal-wd">{{ wd }}</div> }
           @for (week of calWeeks; track $index) {
             @for (day of week; track $index) {
-              <div class="cal-cell" [class.empty]="!day" [class.today]="day && isToday(day)" [class.done]="day && isDone(day)">
+              <div class="cal-cell" [class.empty]="!day" [class.today]="day && isToday(day)" [class.done]="day && isDone(day)" [class.clickable]="!!day" (click)="day && openEventOn(day)">
                 @if (day) {
                   <span class="cal-day">{{ day }}</span>
                   @for (e of eventsOn(day); track $index) {
@@ -220,6 +188,10 @@
 }
 @if (showCarrier() && carrierDetail) {
   <app-carrier-modal [detail]="carrierDetail" (closed)="closeCarrier()" (expand)="expandCarrier()"></app-carrier-modal>
+}
+
+@if (showAi() && aiProof) {
+  <app-ai-call-modal [proof]="aiProof" (closed)="closeAi()"></app-ai-call-modal>
 }
 
 @if (showAdd()) {

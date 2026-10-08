@@ -1,16 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { NgClass, Location } from '@angular/common';
 import { LoadModalComponent } from './load-modal.component';
 import { DetailContextService } from './detail-context.service';
 import { DetailActionsComponent } from '../shared/detail-actions.component';
+import { AiCallModalComponent } from './ai-call-modal.component';
+import { AiProof } from './ai-proof';
 import { Cell } from './mock-data';
 
 @Component({
   selector: 'app-load-page',
   standalone: true,
-  imports: [NgClass, LoadModalComponent, DetailActionsComponent],
+  imports: [NgClass, LoadModalComponent, DetailActionsComponent, AiCallModalComponent],
   template: `
     <div class="detail-page">
+      @if (showAi() && aiProof) {
+        <app-ai-call-modal [proof]="aiProof" (closed)="closeAi()"></app-ai-call-modal>
+      }
       @if (row) {
         <div class="dp-head">
           <div class="dp-left">
@@ -21,7 +26,8 @@ import { Cell } from './mock-data';
             @if (val('status')) { <span class="pill" [ngClass]="tone('status')">{{ val('status') }}</span> }
             @if (val('importance')) { <span class="pill" [ngClass]="tone('importance')">{{ val('importance') }}</span> }
           </div>
-          <app-detail-actions [emailTo]="val('contactEmail') || 'ops@customer.example'" [emailSubject]="'Load ' + val('load') + (val('lane') ? ' — ' + val('lane') : '')"></app-detail-actions>
+          <app-detail-actions [emailTo]="val('contactEmail') || 'ops@customer.example'" [emailSubject]="'Load ' + val('load') + (val('lane') ? ' — ' + val('lane') : '')"
+                              [showOriginLog]="!!aiProof" (originLog)="showAi.set(true)"></app-detail-actions>
         </div>
         <div class="dp-body">
           <app-load-modal [row]="row" [inline]="true"></app-load-modal>
@@ -58,7 +64,13 @@ import { Cell } from './mock-data';
 })
 export class LoadPageComponent {
   row: Record<string, Cell> | null;
-  constructor(private location: Location, ctx: DetailContextService) { this.row = ctx.loadRow; }
+  aiProof: AiProof | null = null;
+  showAi = signal(false);
+  closeAi() { this.showAi.set(false); }
+  constructor(private location: Location, ctx: DetailContextService) {
+    this.row = ctx.loadRow;
+    this.aiProof = ctx.aiProof;   // opened via the "Origin log" button, not automatically
+  }
   val(k: string) { return this.row?.[k]?.text ?? ''; }
   tone(k: string) { return this.row?.[k]?.tone ?? 'default'; }
   back() { this.location.back(); }

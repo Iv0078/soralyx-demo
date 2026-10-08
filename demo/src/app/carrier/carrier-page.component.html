@@ -1,4 +1,7 @@
 <div class="cpage">
+  @if (showAi() && aiProof) {
+    <app-ai-call-modal [proof]="aiProof" (closed)="closeAi()"></app-ai-call-modal>
+  }
   <!-- White header bar -->
   <div class="chead">
     <div class="ch-left">
@@ -12,7 +15,8 @@
       </div>
       <span class="state-pill" [ngClass]="statePill">{{ state }}</span>
     </div>
-    <app-detail-actions [emailTo]="contact.email" [emailSubject]="(bid ? 'Rate request — ' : 'Carrier — ') + name"></app-detail-actions>
+    <app-detail-actions [emailTo]="contact.email" [emailSubject]="(bid ? 'Rate request — ' : 'Carrier — ') + name"
+                        [showOriginLog]="!!aiProof" (originLog)="showAi.set(true)"></app-detail-actions>
   </div>
 
   <div class="cbody">
