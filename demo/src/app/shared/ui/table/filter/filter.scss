@@ -1,0 +1,70 @@
+:host { display: block; }
+
+.toolbar { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
+
+/* the search box is now <app-input-box variant="search">; size it as a flex item */
+.toolbar app-input-box.tsearch { flex: 1 1 11.25rem; min-width: 11.25rem; }
+
+.tbtn {
+  display: flex; align-items: center; gap: 0.5rem;
+  border: 1px solid #e4e7ef; border-radius: 0.625rem; padding: 0.625rem 0.9375rem;
+  font: inherit; font-size: 0.875rem; font-weight: 600; color: #414a5c; background: #fff; cursor: pointer;
+}
+.tbtn:hover { background: #f4f5fb; }
+.tbtn.on { color: var(--brand); border-color: var(--brand-border); background: var(--brand-tint); }
+
+/* filter panel */
+.panel {
+  margin-top: 0.75rem; padding: 1rem; border: 1px solid #eef0f5;
+  border-radius: 0.75rem; background: #fafbff;
+}
+.panel.hidden { display: none; }
+/* stack multiple single-date searches */
+.dateblock app-date-search { display: block; }
+.dateblock app-date-search + app-date-search { margin-top: 0.75rem; }
+/* date filter on the left, the rest of the options to its right */
+.panel-cols { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+.dateblock { flex: 0 0 auto; width: 22rem; max-width: 100%; display: flex; flex-direction: column; }
+.grid {
+  flex: 1 1 16rem; min-width: 0;
+  display: grid; gap: 0.75rem 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.flabel {
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: #9aa2b2;
+}
+/* highlight the field name blue when it's focused/selected (even if empty) or has a value */
+.field:focus-within .flabel,
+.flabel.active { color: var(--brand); }
+
+/* panel footer: Clear all on the left, Search (primary) on the right */
+.panel-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
+.searchbtn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  border: 0; border-radius: 0.5rem; padding: 0.6rem 1.15rem;
+  background: var(--brand); color: #fff; font: inherit; font-size: 0.875rem; font-weight: 700; cursor: pointer;
+}
+.searchbtn:hover { background: var(--brand-dark); }
+
+.clear {
+  border: 0; background: none; padding: 0;
+  font: inherit; font-size: 0.8rem; font-weight: 600; color: var(--brand); cursor: pointer;
+}
+.clear:hover { text-decoration: underline; }
+
+.tbtn.icon { padding: 0.625rem; }
+
+/* svg-icon sizes (mask base is global) */
+.tbtn .svg-ic { width: 0.9375rem; height: 0.9375rem; }
+.tbtn.icon .svg-ic { width: 1.05rem; height: 1.05rem; }
+.searchbtn .svg-ic { width: 1rem; height: 1rem; }
+
+/* "+ New" primary action in the toolbar */
+.tbtn.add {
+  border: 0; background: var(--brand); color: #fff;
+  margin-left: auto; /* push it to the right edge of the toolbar */
+}
+.tbtn.add:hover { background: var(--brand-dark); }
+.tbtn.add .plus { font-size: 1.05rem; line-height: 1; font-weight: 700; }
