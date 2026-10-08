@@ -1,0 +1,46 @@
+:host { display: block; }
+
+.ds { position: relative; }
+
+.ds-fields { display: flex; align-items: flex-end; gap: 0.5rem; }
+
+.dsf { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0; }
+.dsf-lab {
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: #9aa2b2;
+}
+
+.arrow { color: #b3b9c6; font-size: 0.9rem; padding-bottom: 0.55rem; }
+
+/* single-date comparison toggle: < = > */
+.cmp { display: inline-flex; border: 1px solid #e4e7ef; border-radius: 0.5rem; overflow: hidden; flex: none; }
+.cmp button {
+  width: 2rem; height: 2.25rem; border: 0; border-left: 1px solid #e4e7ef;
+  background: #fff; color: #6b7280; cursor: pointer; font: inherit; font-size: 0.95rem; font-weight: 700;
+}
+.cmp button:first-child { border-left: 0; }
+.cmp button:hover { background: #f4f5fb; }
+.cmp button.on { background: var(--brand); color: #fff; }
+
+.ds-cal {
+  flex: none; width: 2.25rem; height: 2.25rem; border: 1px solid #e4e7ef; border-radius: 0.5rem;
+  background: #fff; color: var(--brand); cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.ds-cal:hover { background: #f7f8fb; }
+.ds-cal.on { border-color: var(--brand-border); background: var(--brand-tint); }
+.ds-cal svg { width: 1.1rem; height: 1.1rem; }
+
+/* float the calendar so opening it doesn't push the other filters */
+.ds-pop { position: absolute; top: 100%; left: 0; margin-top: 0.5rem; z-index: 50; }
+
+/* svg-icon size (mask base is global) */
+.ds-cal .svg-ic { width: 1.1rem; height: 1.1rem; }
+
+/* highlight the date label when its field is focused, or when the calendar is
+   open and this is the field the next click will set (.active) */
+.dsf:focus-within .dsf-lab,
+.dsf.active .dsf-lab { color: var(--brand); }
+
+/* invalid range (ship after delivery) */
+.dsf.invalid .dsf-lab { color: #d3455b; }
+.dserr { font-size: 0.65rem; color: #d3455b; margin-top: 0.15rem; }
