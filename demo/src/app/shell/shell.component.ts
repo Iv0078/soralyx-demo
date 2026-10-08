@@ -3,17 +3,19 @@ import { NgClass } from '@angular/common';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { SoralyxLogoComponent } from '../shared/logo.component';
+import { SidebarRailComponent } from './sidebar-rail.component';
 import { NAV_MENUS, NavMenu } from '../core/nav';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [NgClass, RouterLink, RouterOutlet, SoralyxLogoComponent],
+  imports: [NgClass, RouterLink, RouterOutlet, SoralyxLogoComponent, SidebarRailComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
 export class ShellComponent {
   readonly navMenus: NavMenu[] = NAV_MENUS;
+  readonly year = new Date().getFullYear();
 
   openMenu = signal<number | null>(null);
   accountOpen = signal(false);

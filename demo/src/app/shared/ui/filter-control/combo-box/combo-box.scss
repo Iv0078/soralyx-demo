@@ -1,0 +1,9 @@
+:host { display: block; }
+
+.cbox {
+  width: 100%; box-sizing: border-box; height: 2.25rem;
+  font: inherit; font-size: 0.84rem; color: #1c2030;
+  border: 1px solid #e4e7ef; border-radius: 0.5rem; padding: 0 0.625rem; background: #fff; outline: 0;
+  cursor: pointer;
+}
+.cbox:focus { border-color: var(--brand-focus); box-shadow: 0 0 0 0.1875rem rgba(var(--brand-rgb), .15); }

@@ -1,0 +1,55 @@
+<div class="cal">
+  <div class="grids">
+    @for (mv of months(); track mv.label; let i = $index) {
+      <div class="grid">
+        <div class="ghead">
+          <button type="button" class="nav" (click)="prev(i)" aria-label="Previous month">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="mtitle" [class.on]="picking() === i" (click)="openPicker(i)">{{ mv.label }}</button>
+          <button type="button" class="nav" (click)="next(i)" aria-label="Next month">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="dow">
+          @for (d of weekdays; track d) { <span>{{ d }}</span> }
+        </div>
+
+        @for (week of mv.weeks; track $index) {
+          <div class="week">
+            @for (day of week; track day.date.getTime()) {
+              <button type="button" class="day"
+                      [class.out]="!day.inMonth"
+                      [class.start]="isStart(day)"
+                      [class.end]="isEnd(day)"
+                      [class.inrange]="inRange(day)"
+                      [class.today]="isToday(day)"
+                      [disabled]="!day.inMonth"
+                      (click)="onPick(day)">{{ day.date.getDate() }}</button>
+            }
+          </div>
+        }
+
+        @if (picking() === i) {
+          <div class="mpick">
+            <div class="mpick-year">
+              <button type="button" class="nav" (click)="yearStep(-1)" aria-label="Previous year">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="yr">{{ pickYear() }}</span>
+              <button type="button" class="nav" (click)="yearStep(1)" aria-label="Next year">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="mpick-grid">
+              @for (mo of MONTHS_SHORT; track mo; let mi = $index) {
+                <button type="button" [class.cur]="mi === mv.m && pickYear() === mv.y" (click)="chooseMonth(mi)">{{ mo }}</button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

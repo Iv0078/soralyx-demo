@@ -1,0 +1,6 @@
+<select class="cbox" [value]="value" (change)="onChange($event)">
+  <option value="">{{ placeholder }}</option>
+  @for (o of options; track o) {
+    <option [value]="o">{{ o }}</option>
+  }
+</select>

@@ -5,6 +5,8 @@ import { DetailContextService, CarrierBid } from '../sections/detail-context.ser
 import { buildCarrierDetail } from '../quotes/carrier-detail';
 import { Metric } from '../quotes/models';
 import { DetailActionsComponent } from '../shared/detail-actions.component';
+import { AiCallModalComponent } from '../sections/ai-call-modal.component';
+import { AiProof } from '../sections/ai-proof';
 
 interface ActiveLoad { load: string; lane: string; pickup: string; rate: string; status: string; tone: string; }
 interface DocItem { name: string; meta: string; }
@@ -13,11 +15,16 @@ interface Note { who: string; initials: string; color: string; time: string; tex
 @Component({
   selector: 'app-carrier-page',
   standalone: true,
-  imports: [NgClass, FormsModule, DetailActionsComponent],
+  imports: [NgClass, FormsModule, DetailActionsComponent, AiCallModalComponent],
   templateUrl: './carrier-page.component.html',
   styleUrl: './carrier-page.component.scss',
 })
 export class CarrierPageComponent {
+  // AI dispatch proof (email chain / transcript), shown on top when AI-made
+  aiProof: AiProof | null = null;
+  showAi = signal(false);
+  closeAi() { this.showAi.set(false); }
+
   bid: CarrierBid | null = null;
   tiles: Metric[] = [];          // Deliveries / Cancelled / On-time
   failures: Metric[] = [];       // OTP / OTD / Comms / Claims
@@ -130,6 +137,7 @@ export class CarrierPageComponent {
       if (!this.usaZones.length) this.usaZones = ['Pacific', 'Mountain West'];
       if (!this.canadaZones.length) this.canadaZones = ['Alberta', 'Ontario'];
     }
+    this.aiProof = ctx.aiProof;   // opened via the "Origin log" button, not automatically
   }
   back() { this.location.back(); }
 }

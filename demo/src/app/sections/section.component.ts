@@ -1,7 +1,7 @@
 import { Component, OnDestroy, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SECTIONS, Section, Stat, Cell } from './mock-data';
 import { TrackingModalComponent } from './tracking-modal.component';
@@ -13,11 +13,15 @@ import { QuoteContextService } from '../quotes/quote-context.service';
 import { RfqContextService } from '../rfq/rfq-context.service';
 import { DetailContextService } from './detail-context.service';
 import { NAV_MENUS, NavItem } from '../core/nav';
+import { Table, TableColumn, FilterCriteria, filterRows } from '../shared/ui/table/table';
+import { Filter } from '../shared/ui/table/filter/filter';
+import { AiCallModalComponent } from './ai-call-modal.component';
+import { AiProof, aiProofFor } from './ai-proof';
 
 @Component({
   selector: 'app-section',
   standalone: true,
-  imports: [NgClass, FormsModule, TrackingModalComponent, LoadModalComponent, CarrierModalComponent],
+  imports: [NgClass, FormsModule, RouterLink, Table, Filter, TrackingModalComponent, LoadModalComponent, CarrierModalComponent, AiCallModalComponent],
   templateUrl: './section.component.html',
   styleUrl: './section.component.scss',
 })
@@ -35,18 +39,28 @@ export class SectionComponent implements OnDestroy {
   showLoad = signal(false);
   carrierDetail: CarrierDetail | null = null;
   showCarrier = signal(false);
+  // proof that a row was dispatched by AI (email chain / call transcript)
+  aiProof: AiProof | null = null;
+  showAi = signal(false);
+
+  // ---- website table/filter adapter ----
+  webColumns: TableColumn[] = [];
+  appCriteria = signal<FilterCriteria>({ search: '', fields: {} });
 
   curSlug = '';
   constructor(route: ActivatedRoute, private router: Router, private quoteCtx: QuoteContextService, private rfqCtx: RfqContextService, private detailCtx: DetailContextService) {
     this.sub = route.paramMap.subscribe(p => {
       this.curSlug = p.get('slug') ?? '';
       this.data = SECTIONS[p.get('slug') ?? ''] ?? null;
+      this.buildColumns();
+      this.appCriteria.set({ search: '', fields: {} });
       this.query.set('');
       this.filters.set({});
       this.showFilters.set(false);
       this.showTrack.set(false); this.trackRow = null;
       this.showLoad.set(false); this.loadRow = null;
       this.showCarrier.set(false); this.carrierDetail = null;
+      this.showAi.set(false); this.aiProof = null;
       this.showEvent.set(false);
       if (this.data?.kind === 'calendar') this.seedCalendar();
       window.scrollTo(0, 0);
@@ -62,6 +76,9 @@ export class SectionComponent implements OnDestroy {
   }
   isCurrent(link: string) { return link === '/section/' + this.curSlug; }
   goSection(link: string) { this.router.navigateByUrl(link); }
+
+  // back arrow on dispatch-board sub-pages -> return to the board
+  goBack() { if (this.data?.backTo) this.router.navigateByUrl(this.data.backTo); }
 
   get rows(): Record<string, Cell>[] {
     const d = this.data;
@@ -79,6 +96,104 @@ export class SectionComponent implements OnDestroy {
       }
       return true;
     });
+  }
+
+  // ===== website table/filter adapter =====
+  // Build TableColumn[] (the website table's column model) from the demo's
+  // Section.columns, inferring each column's render kind + filter control from
+  // the shape of its cells (id-link, status pill, date, number, select, text).
+  private buildColumns(): void {
+    const d = this.data;
+    if (!d?.columns) { this.webColumns = []; return; }
+    const rows = d.rows ?? [];
+    const filterKeys = d.filterKeys ?? [];
+    // auto-add OS/DS columns after origin/dest (unless the section already has them)
+    const hasOS = d.columns.some(c => c.key === 'originState');
+    const hasDS = d.columns.some(c => c.key === 'destState');
+    const out: TableColumn[] = [];
+    for (const col of d.columns) {
+      const cells = rows.map(r => r[col.key]).filter(Boolean) as Cell[];
+      const isDate = cells.length > 0 && cells.every(c => /^\d{2}-\d{2}-\d{4}$/.test((c.text || '').trim()));
+      const isId = cells.some(c => c.tone === 'info' && c.mono);
+      const isStatus = !isId && cells.some(c => !!c.tone);
+      const isNum = /rate|amount|offer|amt|total|price/i.test(col.key);
+      const kind: TableColumn['kind'] = isId ? 'link' : isStatus ? 'status' : (cells.some(c => c.mono) ? 'mono' : 'text');
+      let filter: TableColumn['filter'];
+      if (isDate) filter = 'date';
+      else if (isStatus) filter = 'select';
+      else if (isId) filter = 'none';
+      else if (isNum) filter = 'number';
+      else filter = filterKeys.includes(col.key) ? 'select' : 'text';
+      const tc: TableColumn = { key: col.key, label: col.label, kind, filter };
+      if (col.align === 'right') tc.align = 'right';
+      if (filter === 'select') {
+        const opts = new Set<string>();
+        cells.forEach(c => { if (c.text) opts.add(c.text); });
+        tc.options = Array.from(opts);
+      }
+      out.push(tc);
+      if (col.key === 'origin' && !hasOS) out.push({ key: 'originState', label: 'OS', fullLabel: 'Origin State', kind: 'text', filter: 'none' });
+      if (col.key === 'dest' && !hasDS) out.push({ key: 'destState', label: 'DS', fullLabel: 'Destination State', kind: 'text', filter: 'none' });
+    }
+    this.webColumns = out;
+  }
+
+  // one website-format row per demo row, carrying a hidden back-reference (_src)
+  // so a row click can run the demo's own rowClick() against the original Cell row
+  private toWebRow(r: Record<string, Cell>): Record<string, any> {
+    const o: Record<string, any> = {};
+    for (const col of this.webColumns) {
+      const cell = r[col.key];
+      // OS/DS: use an explicit cell if present, otherwise derive the 2-letter
+      // state/province from the origin/dest city
+      if (!cell && col.key === 'originState') { o[col.key] = stateOf(r['origin']?.text); continue; }
+      if (!cell && col.key === 'destState') { o[col.key] = stateOf(r['dest']?.text); continue; }
+      if (!cell) { o[col.key] = ''; continue; }
+      o[col.key] = col.kind === 'status' ? { label: cell.text, tone: cell.tone || 'grey' } : cell.text;
+    }
+    o['_src'] = r;
+    return o;
+  }
+
+  // demo rows after the stat-tile filters only (search/panel handled by app-filter)
+  private get statFilteredRows(): Record<string, Cell>[] {
+    const f = this.filters();
+    return (this.data?.rows ?? []).filter(r => Object.keys(f).every(k => (r[k]?.text ?? '') === f[k]));
+  }
+
+  get webRows(): Record<string, any>[] {
+    const all = this.statFilteredRows.map(r => this.toWebRow(r));
+    return filterRows(all, this.webColumns, this.appCriteria());
+  }
+
+  applyWeb(c: FilterCriteria): void { this.appCriteria.set(c); }
+
+  // row click from the website table -> run the demo's own behaviour on the source row
+  onWebRow(web: Record<string, any>): void {
+    const src = web['_src'] as Record<string, Cell> | undefined;
+    if (src) this.rowClick(src);
+  }
+
+  // dispatch board = the connected two-month range (ship + delivery)
+  get rangeDates(): boolean { return this.curSlug === 'load-board'; }
+
+  // the four website "pills" on the dispatch board
+  get showBoards(): boolean { return this.curSlug === 'load-board'; }
+
+  // "+ New" from the website filter -> convert back to a demo Cell row and prepend
+  onWebAdd(web: Record<string, any>): void {
+    if (!this.data?.rows) return;
+    const row: Record<string, Cell> = {};
+    for (const col of this.webColumns) {
+      const v = web[col.key];
+      if (col.kind === 'status') {
+        const lab = v && typeof v === 'object' ? String(v.label ?? '') : String(v ?? '');
+        row[col.key] = lab ? { text: lab, tone: (v && v.tone) || 'grey' } : { text: '' };
+      } else {
+        row[col.key] = { text: String(v ?? ''), mono: col.kind === 'mono' || col.kind === 'link', ...(col.kind === 'link' ? { tone: 'info' as const } : {}) };
+      }
+    }
+    this.data.rows = [row, ...this.data.rows];
   }
 
   options(key: string): string[] {
@@ -216,6 +331,8 @@ export class SectionComponent implements OnDestroy {
   showEvent = signal(false);
   evForm = { day: 12, title: '', importance: 'Medium' };
   openEvent() { this.evForm = { day: this.viewMonth() === this.TODAY.m && this.viewYear() === this.TODAY.y ? this.TODAY.d : 1, title: '', importance: 'Medium' }; this.showEvent.set(true); }
+  // click a day cell to add an event on that day
+  openEventOn(day: number) { this.evForm = { day, title: '', importance: 'Medium' }; this.showEvent.set(true); }
   cancelEvent() { this.showEvent.set(false); }
   private toneForImportance(i: string): string { return i === 'High' ? 'bad' : i === 'Low' ? 'info' : 'warn'; }
   saveEvent() {
@@ -230,15 +347,22 @@ export class SectionComponent implements OnDestroy {
   get actionable() { return !!this.data?.rowAction; }
   rowClick(row: Record<string, Cell>) {
     const a = this.data?.rowAction;
-    // Quick view mode: open the popup instead of navigating to the subpage
-    if (this.quickViewMode() && (a === 'load' || a === 'tracing' || a === 'carrier')) { this.openQuickView(row); return; }
+    // AI-dispatched rows: the email chain / transcript proof is attached to the
+    // FULL detail view (shown on top there) — never in quick view.
+    const ai = row['dispatcher']?.text === 'AI' || row['bidding']?.text === 'AI';
+    const proof = ai ? aiProofFor(row) : null;
+    // Quick view mode: open the popup instead of navigating — no AI proof here
+    if (this.quickViewMode() && (a === 'load' || a === 'tracing' || a === 'carrier')) { this.detailCtx.aiProof = null; this.openQuickView(row); return; }
     if (a === 'quote') {
+      this.quoteCtx.aiProof = proof;
       const lane = (row['lane']?.text ?? '').split('→');
+      const origin = row['origin']?.text ?? (lane[0] ?? '').trim();
+      const destination = row['dest']?.text ?? (lane[1] ?? '').trim();
       this.quoteCtx.current = {
         number: row['q']?.text ?? '',
         customer: row['cust']?.text ?? '',
-        origin: (lane[0] ?? '').trim(),
-        destination: (lane[1] ?? '').trim(),
+        origin,
+        destination,
         amount: row['amt']?.text,
         status: row['status']?.text,
         currency: row['curr']?.text || 'USD',
@@ -261,9 +385,11 @@ export class SectionComponent implements OnDestroy {
       };
       this.router.navigate(['/rfq']);
     }
-    else if (a === 'tracing') { this.detailCtx.traceRow = row; this.router.navigate(['/trace']); }
-    else if (a === 'load') { this.detailCtx.loadRow = row; this.router.navigate(['/load']); }
-    else if (a === 'carrier') { this.detailCtx.carrier = this.carrierCtxFor(row); this.router.navigate(['/carrier']); }
+    else if (a === 'tracing') { this.detailCtx.aiProof = proof; this.detailCtx.traceRow = row; this.router.navigate(['/trace']); }
+    else if (a === 'load') { this.detailCtx.aiProof = proof; this.detailCtx.loadRow = row; this.router.navigate(['/load']); }
+    else if (a === 'carrier') { this.detailCtx.carrier = this.carrierCtxFor(row); this.detailCtx.aiProof = proof; this.router.navigate(['/carrier']); }
+    // AI row with no full detail view (e.g. the Pending quotes board) -> show proof inline
+    else if (ai) { this.aiProof = proof; this.showAi.set(true); }
   }
 
   // ---- Quick view mode (toggle): row click opens a popup instead of the page ----
@@ -282,9 +408,14 @@ export class SectionComponent implements OnDestroy {
     }
   }
   // Expand a popup to its full subpage
-  expandLoad() { this.showLoad.set(false); if (this.loadRow) this.detailCtx.loadRow = this.loadRow; this.router.navigate(['/load']); }
-  expandTrack() { this.showTrack.set(false); if (this.trackRow) this.detailCtx.traceRow = this.trackRow; this.router.navigate(['/trace']); }
-  expandCarrier() { this.showCarrier.set(false); if (this.qvRow) this.detailCtx.carrier = this.carrierCtxFor(this.qvRow); this.router.navigate(['/carrier']); }
+  // AI proof for a row, or null if it wasn't AI-made
+  private proofFor(row: Record<string, Cell> | null): AiProof | null {
+    return row && (row['dispatcher']?.text === 'AI' || row['bidding']?.text === 'AI') ? aiProofFor(row) : null;
+  }
+  // expanding a quick-view popup to the full page = full view -> carry the AI proof
+  expandLoad() { this.showLoad.set(false); this.detailCtx.aiProof = this.proofFor(this.loadRow); if (this.loadRow) this.detailCtx.loadRow = this.loadRow; this.router.navigate(['/load']); }
+  expandTrack() { this.showTrack.set(false); this.detailCtx.aiProof = this.proofFor(this.trackRow); if (this.trackRow) this.detailCtx.traceRow = this.trackRow; this.router.navigate(['/trace']); }
+  expandCarrier() { this.showCarrier.set(false); this.detailCtx.aiProof = this.proofFor(this.qvRow); if (this.qvRow) this.detailCtx.carrier = this.carrierCtxFor(this.qvRow); this.router.navigate(['/carrier']); }
   private carrierCtxFor(row: Record<string, Cell>) {
     const name = row['carrier']?.text ?? row['name']?.text ?? 'Carrier';
     const st = row['status']?.text ?? '';
@@ -304,4 +435,20 @@ export class SectionComponent implements OnDestroy {
   closeTrack() { this.showTrack.set(false); }
   closeLoad() { this.showLoad.set(false); }
   closeCarrier() { this.showCarrier.set(false); }
+  closeAi() { this.showAi.set(false); }
+}
+
+// City -> state/province (2-letter) for auto-derived OS/DS columns.
+const CITY_STATE: Record<string, string> = {
+  'Los Angeles': 'CA', 'Ontario': 'CA', 'Las Vegas': 'NV', 'Phoenix': 'AZ',
+  'Dallas': 'TX', 'Houston': 'TX', 'Denver': 'CO', 'Salt Lake City': 'UT',
+  'Chicago': 'IL', 'Atlanta': 'GA', 'Charlotte': 'NC', 'Miami': 'FL',
+  'Seattle': 'WA', 'Portland': 'OR', 'Memphis': 'TN', 'Nashville': 'TN',
+  'Kansas City': 'MO', 'Detroit': 'MI', 'Buffalo': 'NY', 'Newark': 'NJ',
+  'Boston': 'MA', 'New Orleans': 'LA',
+  'Toronto': 'ON', 'Windsor': 'ON', 'Edmonton': 'AB',
+};
+function stateOf(city?: string): string {
+  const c = (city || '').trim();
+  return CITY_STATE[c] ?? '';
 }
