@@ -1,0 +1,122 @@
+<div class="overlay" (click)="close()">
+  <div class="window" (click)="$event.stopPropagation()">
+
+    <!-- window title bar -->
+    <div class="titlebar">
+      <div class="tb-left">
+        <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+          <defs><linearGradient id="tbm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6E6FFD"/><stop offset="1" stop-color="#3396CD"/></linearGradient></defs>
+          <g stroke="url(#tbm)" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M16 28V12"/><path d="M16 18C10.5 18 8.6 13.8 9.4 9.2"/><path d="M16 16.5L21 14"/></g>
+          <circle cx="16" cy="8.2" r="3" fill="url(#tbm)"/><circle cx="22.6" cy="12.6" r="2.4" fill="url(#tbm)"/>
+        </svg>
+        <span>Carrier profile</span>
+      </div>
+      <div class="tb-controls">
+        <button class="tb-btn" (click)="expand.emit()" aria-label="Expand to page" title="Open as page"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5M20 15v5h-5M4 20l6-6M20 4l-6 6" stroke="#737b8c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="tb-btn danger" (click)="close()" aria-label="Close"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#e5484d" stroke-width="1.9" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>
+
+    <!-- header -->
+    <div class="head">
+      <div class="avatar" [style.background]="detail.color">{{ detail.monogram }}</div>
+      <div class="head-txt">
+        <span class="name">{{ detail.name }}</span>
+        <span class="mono mc">{{ detail.mc }}</span>
+      </div>
+    </div>
+
+    <div class="body">
+      <!-- contact + address -->
+      <div class="two">
+        <div class="col">
+          <span class="ovl">Contact</span>
+          <span class="strong">{{ detail.contact.name }}</span>
+          <span class="dim">{{ detail.contact.title }}</span>
+          <span class="mono dim2">{{ detail.contact.phone }}</span>
+          <span class="link">{{ detail.contact.email }}</span>
+        </div>
+        <div class="col">
+          <span class="ovl">Company address</span>
+          <span class="addr">@for (l of detail.address; track l) {<span>{{ l }}</span>}</span>
+        </div>
+      </div>
+
+      <!-- stat tiles -->
+      <div class="tiles">
+        <div class="tile-row three">
+          @for (m of detail.primary; track m.label) {
+            <div class="tile" [ngClass]="m.state">
+              <div class="t-label">{{ m.label }}</div>
+              <div class="mono t-val">{{ m.value }}</div>
+              @if (m.sub) { <div class="mono t-sub">{{ m.sub }}</div> }
+            </div>
+          }
+        </div>
+        <div class="tile-row four">
+          @for (m of detail.failures; track m.label) {
+            <div class="tile" [ngClass]="m.state">
+              <div class="t-label">{{ m.label }}</div>
+              <div class="mono t-val sm">{{ m.value }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- recent activity -->
+      <div class="graph card">
+        <div class="graph-head">
+          <span class="strong2">Recent activity <span class="dim">· loads per month</span></span>
+          <button class="chip-btn">Last 6 months
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#9aa2b2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="bars">
+          @for (a of detail.activity; track a.label) {
+            <div class="bar-col">
+              <span class="mono bar-val">{{ a.value }}</span>
+              <div class="bar" [class.current]="a.current" [style.height]="barHeight(a.value)"></div>
+              <span class="bar-lab">{{ a.label }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- deliveries -->
+      <div>
+        <div class="graph-head" style="margin-bottom:10px;">
+          <span class="strong2">All deliveries</span>
+          <span class="dim">Showing {{ detail.deliveries.length }} of {{ detail.deliveriesTotal }}</span>
+        </div>
+
+        <!-- filter bar -->
+        <div class="filters">
+          <div class="search">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#9aa2b2" stroke-width="1.7"/><path d="M20 20l-3.5-3.5" stroke="#9aa2b2" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span>Search load or lane…</span>
+          </div>
+          <button class="chip-btn">Status: All <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#9aa2b2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="chip-btn">Lane: All <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#9aa2b2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="chip-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="#737b8c" stroke-width="1.5"/><path d="M3 9h18M8 3v4M16 3v4" stroke="#737b8c" stroke-width="1.5" stroke-linecap="round"/></svg>Date</button>
+        </div>
+
+        <div class="table">
+          <div class="t-head">
+            <div>Load</div><div>Lane</div><div class="r">Date</div><div class="r">Rate</div><div class="r">Status</div>
+          </div>
+          <div class="t-scroll">
+            @for (d of detail.deliveries; track d.load) {
+              <div class="t-row">
+                <span class="mono link">{{ d.load }}</span>
+                <span>{{ d.lane }}</span>
+                <span class="mono r dim2">{{ d.date }}</span>
+                <span class="mono r">{{ d.rate }}</span>
+                <span class="r" [class.ok]="d.status==='Delivered'" [class.bad]="d.status==='Cancelled'">{{ d.status }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

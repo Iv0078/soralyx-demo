@@ -1,0 +1,33 @@
+:host { display: block; }
+
+.tablewrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; min-width: 45rem; }
+
+th {
+  text-align: left; font-size: 0.6875rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: #9aa2b2; padding: 0.8rem 0.75rem;
+  border-bottom: 1px solid #eef0f3; white-space: nowrap;
+}
+td {
+  font-size: 0.875rem; color: #2b3040; padding: 0.9375rem 0.75rem;
+  border-bottom: 1px solid #f2f3f7; white-space: nowrap;
+}
+tr:last-child td { border-bottom: 0; }
+th.r, td.r { text-align: right; }
+tbody tr:hover td { background: #f7f8fb; }
+
+/* click-to-group headers */
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: #6b7280; }
+th.sorted { color: #4f46e5; }
+th .caret { margin-left: 0.25rem; font-size: 0.625rem; }
+
+.empty td { text-align: center; color: #9aa2b2; font-style: italic; padding: 1.6rem; }
+
+.mono { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: -.01em; }
+.link { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--brand); font-weight: 600; letter-spacing: -.01em; cursor: pointer; }
+
+/* status pills are shared globally (see src/styles.scss) */
+
+tr.clickable { cursor: pointer; }

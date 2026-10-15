@@ -1,0 +1,226 @@
+<div class="cpage">
+  @if (showAi() && aiProof) {
+    <app-ai-call-modal [proof]="aiProof" (closed)="closeAi()"></app-ai-call-modal>
+  }
+  <!-- White header bar -->
+  <div class="chead">
+    <div class="ch-left">
+      <button class="backbtn" (click)="back()" title="Back to carriers">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="#737b8c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="avatar" [style.background]="color">{{ monogram }}</div>
+      <div class="ch-txt">
+        <span class="name">{{ name }}</span>
+        <span class="mono mc">{{ mc }}</span>
+      </div>
+      <span class="state-pill" [ngClass]="statePill">{{ state }}</span>
+    </div>
+    <app-detail-actions [emailTo]="contact.email" [emailSubject]="(bid ? 'Rate request — ' : 'Carrier — ') + name"
+                        [showOriginLog]="!!aiProof" (originLog)="showAi.set(true)"></app-detail-actions>
+  </div>
+
+  <div class="cbody">
+    <div class="col-main">
+      <!-- Company information (top) -->
+      <section class="card pad">
+        <div class="sec-title">Company information</div>
+        <div class="info-grid">
+          <div class="f"><span>Carrier</span><b>{{ name }}</b></div>
+          <div class="f"><span>MC #</span><b class="mono">{{ mc }}</b></div>
+          <div class="f span2"><span>Address</span><b>{{ address.join(', ') }}</b></div>
+          <div class="f"><span>Contact person</span><b>{{ contact.name }}</b><span class="sub">{{ contact.title }}</span></div>
+          <div class="f"><span>Contact info</span>
+            <b class="ct-line"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 4h3.5l1.6 4-2 1.4a11 11 0 0 0 4.9 4.9l1.4-2 4 1.6V18a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 3 6.2 2 2 0 0 1 5 4z" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="mono">{{ contact.phone }}</span></b>
+            <span class="ct-line mail"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#9aa2b2" stroke-width="1.6"/><path d="M4 6l8 6 8-6" stroke="#9aa2b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{ contact.email }}</span></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lane · pricing · details (only from a carrier quote) -->
+      @if (bid) {
+        <section class="card pad lpd">
+          <div class="lpd-head">
+            <div class="sec-title">Lane · pricing &amp; details</div>
+            @if (bid.status) { <span class="pill" [ngClass]="bid.statusTone || 'good'">{{ bid.status }}</span> }
+          </div>
+
+          <div class="lpd-rate">
+            <div class="lr-left">
+              <span class="lr-label">Rate quoted</span>
+              <span class="mono lr-val">{{ bid.activeQuote || '—' }}</span>
+            </div>
+            <div class="lr-price">
+              <div class="pr-item"><span>Historical avg</span><b class="mono">{{ bid.histAvg }}</b></div>
+              <div class="pr-item"><span>vs. historical</span>
+                <b class="mono" [class.pos]="bidDelta <= 0" [class.neg]="bidDelta > 0">{{ bidDelta > 0 ? '+' : '−' }}{{ money0(bidDelta >= 0 ? bidDelta : -bidDelta) }} · {{ bidPct >= 0 ? '' : '−' }}{{ (bidPct >= 0 ? bidPct : -bidPct).toFixed(1) }}%</b>
+              </div>
+              <div class="pr-item total"><span>All-in rate</span><b class="mono">{{ bid.activeQuote }}</b></div>
+            </div>
+          </div>
+
+          <!-- expanded details: full pickup / drop-off -->
+          @if (origin || destination) {
+            <div class="stops">
+              <div class="stop">
+                <span class="stop-dot pickup"></span>
+                <div class="stop-body">
+                  <span class="stop-kind">Pickup</span>
+                  <b class="stop-city">{{ origin || '—' }}</b>
+                  <span class="stop-addr">{{ originAddr }}</span>
+                  <span class="stop-when mono">{{ pickup }}</span>
+                </div>
+              </div>
+              <div class="stop">
+                <span class="stop-dot drop"></span>
+                <div class="stop-body">
+                  <span class="stop-kind">Drop-off</span>
+                  <b class="stop-city">{{ destination || '—' }}</b>
+                  <span class="stop-addr">{{ destAddr }}</span>
+                  <span class="stop-when mono">{{ delivery }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="lpd-grid">
+            <div class="f"><span>Trailer</span><b>{{ bid.trailer }}</b></div>
+            <div class="f"><span>Transit</span><b class="mono">{{ bid.transit }}</b></div>
+            <div class="f"><span>Weight</span><b class="mono">{{ weight }}</b></div>
+            <div class="f"><span>Commodity</span><b>{{ commodity }}</b></div>
+          </div>
+        </section>
+      }
+
+      <!-- Performance -->
+      <section class="card pad">
+        <div class="sec-title">Performance</div>
+        <div class="tiles three">
+          @for (t of tiles; track t.label) {
+            <div class="tile" [ngClass]="t.state">
+              <div class="t-label">{{ t.label }}</div>
+              <div class="mono t-val">{{ t.value }}</div>
+              @if (t.sub) { <div class="mono t-sub">{{ t.sub }}</div> }
+            </div>
+          }
+        </div>
+        <div class="tiles four">
+          @for (m of failures; track m.label) {
+            <div class="tile" [ngClass]="m.state">
+              <div class="t-label">{{ m.label }}</div>
+              <div class="mono t-val sm">{{ m.value }}</div>
+            </div>
+          }
+        </div>
+        <div class="graph">
+          <div class="graph-head">
+            <span class="g-title">Recent activity <span class="dim">· loads per month</span></span>
+            <button class="chip-btn">Last 6 months
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#9aa2b2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="bars">
+            @for (a of activity; track a.label) {
+              <div class="bar-col">
+                <span class="mono bar-val">{{ a.value }}</span>
+                <div class="bar" [class.current]="a.current" [style.height]="barHeight(a.value)"></div>
+                <span class="bar-lab">{{ a.label }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Active loads -->
+      <section class="card">
+        <div class="lh"><div class="sec-title">Active loads</div><span class="meta">{{ activeLoads.length }} in progress</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Load</th><th>Lane</th><th class="r">Pickup</th><th class="r">Rate</th><th class="r">Status</th></tr></thead>
+            <tbody>
+              @for (l of activeLoads; track l.load) {
+                <tr>
+                  <td class="mono idlink">{{ l.load }}</td>
+                  <td>{{ l.lane }}</td>
+                  <td class="r mono">{{ l.pickup }}</td>
+                  <td class="r mono strong">{{ l.rate }}</td>
+                  <td class="r"><span class="pill" [ngClass]="l.tone">{{ l.status }}</span></td>
+                </tr>
+              }
+              @if (!activeLoads.length) { <tr><td colspan="5" class="empty">No active loads.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right rail: Documents / Services / Notes -->
+    <div class="col-side">
+      <section class="card">
+        <div class="tabs">
+          <button class="tab" [class.on]="docTab() === 'docs'" (click)="docTab.set('docs')">Documents</button>
+          <button class="tab" [class.on]="docTab() === 'permits'" (click)="docTab.set('permits')">Permits</button>
+        </div>
+        <div class="tab-body">
+          @for (d of (docTab() === 'docs' ? documents : permits); track d.name) {
+            <div class="doc">
+              <span class="doc-ico">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#6E6FFD" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="#6E6FFD" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              </span>
+              <div class="doc-txt"><span class="doc-name">{{ d.name }}</span><span class="doc-meta">{{ d.meta }}</span></div>
+              <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#c2c8d6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="card">
+        <button class="svc-head" (click)="servicesOpen.set(!servicesOpen())">
+          <div class="sec-title">Services · coverage</div>
+          <svg class="svc-chev" [class.open]="servicesOpen()" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#737b8c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        @if (servicesOpen()) {
+          <div class="svc-body">
+            <div class="svc-group">
+              <div class="svc-country"><span class="flag">🇺🇸</span> United States <span class="svc-count">{{ usaZones.length }}</span></div>
+              <div class="chips">
+                @for (z of usaZones; track z) { <span class="zone">{{ z }}</span> }
+              </div>
+            </div>
+            <div class="svc-group">
+              <div class="svc-country"><span class="flag">🇨🇦</span> Canada <span class="svc-count">{{ canadaZones.length }}</span></div>
+              <div class="chips">
+                @for (z of canadaZones; track z) { <span class="zone">{{ z }}</span> }
+              </div>
+            </div>
+            <button class="edit-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" stroke="#6E6FFD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Edit coverage
+            </button>
+          </div>
+        }
+      </section>
+
+      <section class="card pad">
+        <div class="side-head">
+          <div class="sec-title">Dispatcher notes</div>
+          <span class="count">{{ notes().length }}</span>
+        </div>
+        <div class="notes">
+          @for (n of notes(); track $index) {
+            <div class="note">
+              <span class="n-av" [style.background]="n.color">{{ n.initials }}</span>
+              <div class="n-body">
+                <div class="n-head"><b>{{ n.who }}</b><span>{{ n.time }}</span></div>
+                <div class="n-text">{{ n.text }}</div>
+              </div>
+            </div>
+          }
+        </div>
+        <div class="note-add">
+          <input [(ngModel)]="draft" (keyup.enter)="addNote()" placeholder="Leave a note…" />
+          <button (click)="addNote()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

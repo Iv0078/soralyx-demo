@@ -1,0 +1,70 @@
+<div class="toolbar">
+  <app-input-box class="tsearch" variant="search" icon="search"
+                 [placeholder]="placeholder" [value]="value" [disabled]="panelOpen()"
+                 (valueChange)="onTopSearch($event)"></app-input-box>
+  <button class="tbtn" type="button" [class.on]="panelOpen()" (click)="togglePanel()">
+    <span class="svg-ic" style="--i:url(assets/svg-icons/filter.svg)"></span>
+    Filters
+  </button>
+  <button class="tbtn" type="button" (click)="export.emit()">
+    <span class="svg-ic" style="--i:url(assets/svg-icons/download.svg)"></span>
+    Export
+  </button>
+  <button class="tbtn icon" type="button" (click)="clear()" title="Reset filters" aria-label="Reset filters">
+    <span class="svg-ic" style="--i:url(assets/svg-icons/arrow-clockwise.svg)"></span>
+  </button>
+  @if (showAdd) {
+    <button class="tbtn add" type="button" (click)="openAdd()">
+      <span class="plus">+</span> New
+    </button>
+  }
+</div>
+
+@if (addOpen()) {
+  <app-add-item [columns]="columns" [title]="addLabel"
+                (save)="onAdded($event)" (cancel)="closeAdd()"></app-add-item>
+}
+
+<!-- kept in the DOM (hidden) so the date pickers keep their state between opens -->
+<div class="panel" [class.hidden]="!panelOpen()">
+  <div class="panel-cols">
+    @if (dateColumns.length) {
+      <div class="dateblock">
+        @for (grp of dateGroups; track grp[0].key) {
+          <app-date-search [columns]="grp" (dates)="onDates($event)"></app-date-search>
+        }
+      </div>
+    }
+
+    <div class="grid">
+      @for (c of plainColumns; track c.key) {
+        <label class="field">
+          <span class="flabel" [class.active]="!!fields[c.key]">{{ c.fullLabel || c.label }}</span>
+
+          @switch (c.filter) {
+            @case ('select') {
+              <app-combo-box [options]="c.options || []" [value]="fields[c.key] || ''"
+                             (valueChange)="onField(c.key, $event)"></app-combo-box>
+            }
+            @case ('number') {
+              <app-input-box mode="numeric" [value]="fields[c.key] || ''"
+                             (valueChange)="onField(c.key, $event)"></app-input-box>
+            }
+            @default {
+              <app-input-box mode="alpha" [value]="fields[c.key] || ''"
+                             (valueChange)="onField(c.key, $event)"></app-input-box>
+            }
+          }
+        </label>
+      }
+    </div>
+  </div>
+
+  <div class="panel-foot">
+    <button class="clear" type="button" (click)="clear()">Clear all</button>
+    <button class="searchbtn" type="button" (click)="runSearch()">
+      <span class="svg-ic" style="--i:url(assets/svg-icons/search.svg)"></span>
+      Search
+    </button>
+  </div>
+</div>

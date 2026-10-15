@@ -1,0 +1,37 @@
+<div class="ds">
+  <div class="ds-fields">
+    <label class="dsf" [class.active]="mode === 'range' && open() && active() === 'start'" [class.invalid]="badStart()" (focusin)="active.set('start')">
+      <span class="dsf-lab">{{ startLabel }}</span>
+      <app-input-box placeholder="mm-dd-yyyy" [value]="startText" (valueChange)="onType('start', $event)"></app-input-box>
+      @if (badStart()) { <span class="dserr">Can't be after {{ endLabel }}</span> }
+    </label>
+
+    @if (mode === 'range') {
+      <span class="arrow">→</span>
+      <label class="dsf" [class.active]="open() && active() === 'end'" [class.invalid]="badEnd()" (focusin)="active.set('end')">
+        <span class="dsf-lab">{{ endLabel }}</span>
+        <app-input-box placeholder="mm-dd-yyyy" [value]="endText" (valueChange)="onType('end', $event)"></app-input-box>
+        @if (badEnd()) { <span class="dserr">Can't be before {{ startLabel }}</span> }
+      </label>
+    } @else {
+      <!-- single-date comparison: on/before, on, on/after -->
+      <div class="cmp" role="group" aria-label="Date comparison">
+        <button type="button" [class.on]="cmp() === 'lte'" (click)="setCmp('lte')" title="On or before">&lt;</button>
+        <button type="button" [class.on]="cmp() === 'eq'" (click)="setCmp('eq')" title="On this date">=</button>
+        <button type="button" [class.on]="cmp() === 'gte'" (click)="setCmp('gte')" title="On or after">&gt;</button>
+      </div>
+    }
+
+    <button type="button" class="ds-cal" [class.on]="open()" (click)="toggle()" aria-label="Open calendar">
+      <span class="svg-ic" style="--i:url(assets/svg-icons/calendar4.svg)"></span>
+    </button>
+  </div>
+
+  @if (open()) {
+    <div class="ds-pop">
+      <app-mini-calendar
+        [start]="start()" [end]="end()" [base]="base()" [single]="mode === 'single'"
+        (pick)="onPick($event)" (baseChange)="base.set($event)"></app-mini-calendar>
+    </div>
+  }
+</div>

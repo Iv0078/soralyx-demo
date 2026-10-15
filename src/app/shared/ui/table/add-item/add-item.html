@@ -1,0 +1,33 @@
+<div class="overlay" (click)="cancel.emit()">
+  <div class="sheet" (click)="$event.stopPropagation()">
+    <header class="ah">
+      <h2>{{ title }}</h2>
+      <button class="x" type="button" (click)="cancel.emit()" aria-label="Close">×</button>
+    </header>
+
+    <div class="grid">
+      @for (c of columns; track c.key) {
+        <label class="field">
+          <span class="flabel">{{ labelOf(c) }}</span>
+          @if (isDropdown(c)) {
+            <select [(ngModel)]="model[c.key]">
+              <option value="">—</option>
+              @for (o of c.options || []; track o) { <option [value]="o">{{ o }}</option> }
+            </select>
+          } @else if (isDate(c)) {
+            <input type="text" placeholder="mm-dd-yyyy" [(ngModel)]="model[c.key]">
+          } @else if (isNumber(c)) {
+            <input type="text" inputmode="numeric" [(ngModel)]="model[c.key]">
+          } @else {
+            <input type="text" [(ngModel)]="model[c.key]">
+          }
+        </label>
+      }
+    </div>
+
+    <footer class="af">
+      <button class="cancel" type="button" (click)="cancel.emit()">Cancel</button>
+      <button class="savebtn" type="button" (click)="onSave()">Save</button>
+    </footer>
+  </div>
+</div>

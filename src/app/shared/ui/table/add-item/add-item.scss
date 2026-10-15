@@ -1,0 +1,57 @@
+:host { display: contents; }
+
+.overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(20, 24, 40, .45);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 3rem 1rem; overflow: auto;
+}
+
+.sheet {
+  width: 100%; max-width: 46rem;
+  background: #fff; border-radius: 1rem;
+  box-shadow: 0 1.5rem 3rem rgba(20, 24, 40, .25);
+  overflow: hidden;
+}
+
+.ah {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 1.375rem; border-bottom: 1px solid #eef0f5;
+}
+.ah h2 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #1c2030; }
+.x {
+  border: 0; background: none; cursor: pointer; line-height: 1;
+  font-size: 1.5rem; color: #9aa2b2; padding: 0 .25rem;
+}
+.x:hover { color: #414a5c; }
+
+.grid {
+  display: grid; gap: 0.9rem 1.25rem; padding: 1.25rem 1.375rem;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+.field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.flabel {
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: #9aa2b2;
+}
+.field input, .field select {
+  width: 100%; box-sizing: border-box; height: 2.25rem;
+  font: inherit; font-size: 0.84rem; color: #1c2030;
+  border: 1px solid #e4e7ef; border-radius: 0.5rem; padding: 0 0.625rem; background: #fff; outline: 0;
+}
+.field input:focus, .field select:focus { border-color: var(--brand-focus); box-shadow: 0 0 0 0.1875rem rgba(var(--brand-rgb), .15); }
+
+.af {
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
+  padding: 1rem 1.375rem; border-top: 1px solid #eef0f5; background: #fafbff;
+}
+.cancel {
+  border: 1px solid #e4e7ef; background: #fff; border-radius: 0.5rem;
+  padding: 0.55rem 1.1rem; font: inherit; font-size: 0.875rem; font-weight: 600; color: #414a5c; cursor: pointer;
+}
+.cancel:hover { background: #f4f5fb; }
+.savebtn {
+  border: 0; border-radius: 0.5rem; padding: 0.6rem 1.25rem;
+  background: var(--brand); color: #fff; font: inherit; font-size: 0.875rem; font-weight: 700; cursor: pointer;
+}
+.savebtn:hover { background: var(--brand-dark); }
