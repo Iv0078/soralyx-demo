@@ -4,7 +4,7 @@
 
 .ds-fields { display: flex; align-items: flex-end; gap: 0.5rem; }
 
-.dsf { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0; }
+.dsf { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0; position: relative; }
 .dsf-lab {
   font-size: 0.6875rem; font-weight: 700; letter-spacing: .04em;
   text-transform: uppercase; color: #9aa2b2;
@@ -41,6 +41,11 @@
 .dsf:focus-within .dsf-lab,
 .dsf.active .dsf-lab { color: var(--brand); }
 
-/* invalid range (ship after delivery) */
+/* error state */
 .dsf.invalid .dsf-lab { color: #d3455b; }
-.dserr { font-size: 0.65rem; color: #d3455b; margin-top: 0.15rem; }
+/* float the error message so it never changes the field height (which would
+   bottom-align-shift the sibling field, the calendar button and the popup) */
+.dserr {
+  position: absolute; top: 100%; left: 0; margin-top: 0.15rem;
+  font-size: 0.65rem; color: #d3455b; white-space: nowrap; pointer-events: none;
+}
