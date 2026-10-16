@@ -19,11 +19,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: demo/package-lock.json
       - run: npm ci
+        working-directory: demo
       - run: npx ng build --base-href /soralyx-demo/
-      - run: cp dist/soralyx-tms/browser/index.html dist/soralyx-tms/browser/404.html
+        working-directory: demo
+      - run: cp demo/dist/soralyx-tms/browser/index.html demo/dist/soralyx-tms/browser/404.html
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/soralyx-tms/browser
+          path: demo/dist/soralyx-tms/browser
       - id: deployment
         uses: actions/deploy-pages@v4
