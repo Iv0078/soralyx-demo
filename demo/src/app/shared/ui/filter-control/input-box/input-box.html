@@ -1,9 +1,9 @@
-<div class="ibox-wrap" [class.search]="variant === 'search'" [class.disabled]="disabled">
+<div class="ibox-wrap" [class.search]="variant === 'search'" [class.disabled]="disabled" [class.invalid]="invalid">
   @if (icon) {
     <span class="svg-ic lead" [style.--i]="iconUrl"></span>
   }
   <input class="ibox" type="text"
          [attr.inputmode]="mode === 'numeric' ? 'numeric' : null"
          [value]="value" [placeholder]="ph" [disabled]="disabled"
-         (input)="onInput($event)">
+         (input)="onInput($event)" (blur)="onBlur($event)">
 </div>

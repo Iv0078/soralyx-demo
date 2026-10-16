@@ -1,12 +1,15 @@
 <div class="cal">
   <div class="grids">
-    @for (mv of months(); track mv.label; let i = $index) {
+    @for (mv of months(); track i; let i = $index) {
       <div class="grid">
         <div class="ghead">
           <button type="button" class="nav" (click)="prev(i)" aria-label="Previous month">
             <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button type="button" class="mtitle" [class.on]="picking() === i" (click)="openPicker(i)">{{ mv.label }}</button>
+          <div class="ghead-mid">
+            <button type="button" class="mtitle" [class.on]="isPicking(i, 'month')" (click)="openPicker(i, 'month')">{{ MONTHS[mv.m] }}</button>
+            <button type="button" class="ytitle" [class.on]="isPicking(i, 'year')" (click)="openPicker(i, 'year')">{{ mv.y }}</button>
+          </div>
           <button type="button" class="nav" (click)="next(i)" aria-label="Next month">
             <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -31,22 +34,31 @@
           </div>
         }
 
-        @if (picking() === i) {
+        @if (isPickerOpen(i)) {
           <div class="mpick">
-            <div class="mpick-year">
-              <button type="button" class="nav" (click)="yearStep(-1)" aria-label="Previous year">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <span class="yr">{{ pickYear() }}</span>
-              <button type="button" class="nav" (click)="yearStep(1)" aria-label="Next year">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-            <div class="mpick-grid">
-              @for (mo of MONTHS_SHORT; track mo; let mi = $index) {
-                <button type="button" [class.cur]="mi === mv.m && pickYear() === mv.y" (click)="chooseMonth(mi)">{{ mo }}</button>
-              }
-            </div>
+            @if (isPicking(i, 'month')) {
+              <div class="mpick-grid">
+                @for (mo of MONTHS_SHORT; track mo; let mi = $index) {
+                  <button type="button" [class.cur]="mi === mv.m" (click)="chooseMonth(i, mi)">{{ mo }}</button>
+                }
+              </div>
+            } @else {
+              <!-- year boxes with arrows to page earlier / later -->
+              <div class="ypick-nav">
+                <button type="button" class="nav" (click)="yearPage(-12)" aria-label="Earlier years">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <span class="yrange">{{ yearWindow()[0] }} – {{ yearWindow()[11] }}</span>
+                <button type="button" class="nav" (click)="yearPage(12)" aria-label="Later years">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="mpick-grid">
+                @for (y of yearWindow(); track y) {
+                  <button type="button" [class.cur]="y === mv.y" (click)="chooseYear(i, y)">{{ y }}</button>
+                }
+              </div>
+            }
           </div>
         }
       </div>

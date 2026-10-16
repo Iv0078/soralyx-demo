@@ -12,6 +12,10 @@
 .ibox::placeholder { color: #b3b9c6; }
 .ibox:disabled { color: #9aa2b2; cursor: not-allowed; }
 
+/* error (red) state for the plain field variant */
+.ibox-wrap.invalid .ibox { border-color: #d3455b; }
+.ibox-wrap.invalid .ibox:focus { border-color: #d3455b; box-shadow: 0 0 0 0.1875rem rgba(211, 69, 91, .15); }
+
 /* ---- "search" variant: grey pill with a leading icon (toolbars) ---- */
 .ibox-wrap.search {
   display: flex; align-items: center; gap: 0.625rem;

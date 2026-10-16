@@ -2,16 +2,16 @@
   <div class="ds-fields">
     <label class="dsf" [class.active]="mode === 'range' && open() && active() === 'start'" [class.invalid]="badStart()" (focusin)="active.set('start')">
       <span class="dsf-lab">{{ startLabel }}</span>
-      <app-input-box placeholder="mm-dd-yyyy" [value]="startText" (valueChange)="onType('start', $event)"></app-input-box>
-      @if (badStart()) { <span class="dserr">Can't be after {{ endLabel }}</span> }
+      <app-input-box placeholder="mm-dd-yyyy" [value]="startText" [invalid]="badStart()" (valueChange)="onType('start', $event)" (blurred)="onFieldBlur('start', $event)"></app-input-box>
+      @if (badStart()) { <span class="dserr">{{ startErr() }}</span> }
     </label>
 
     @if (mode === 'range') {
       <span class="arrow">→</span>
       <label class="dsf" [class.active]="open() && active() === 'end'" [class.invalid]="badEnd()" (focusin)="active.set('end')">
         <span class="dsf-lab">{{ endLabel }}</span>
-        <app-input-box placeholder="mm-dd-yyyy" [value]="endText" (valueChange)="onType('end', $event)"></app-input-box>
-        @if (badEnd()) { <span class="dserr">Can't be before {{ startLabel }}</span> }
+        <app-input-box placeholder="mm-dd-yyyy" [value]="endText" [invalid]="badEnd()" (valueChange)="onType('end', $event)" (blurred)="onFieldBlur('end', $event)"></app-input-box>
+        @if (badEnd()) { <span class="dserr">{{ endErr() }}</span> }
       </label>
     } @else {
       <!-- single-date comparison: on/before, on, on/after -->

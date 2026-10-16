@@ -19,7 +19,9 @@ export class InputBox {
   @Input() value = '';
   @Input() placeholder = '';
   @Input() disabled = false;
+  @Input() invalid = false;           // draw the box in an error (red) state
   @Output() valueChange = new EventEmitter<string>();
+  @Output() blurred = new EventEmitter<string>(); // fired on focus-out with the current text
 
   get ph(): string {
     return this.placeholder || (this.mode === 'numeric' ? '0' : 'Any');
@@ -40,5 +42,9 @@ export class InputBox {
     }
     this.value = v;
     this.valueChange.emit(v);
+  }
+
+  onBlur(e: Event): void {
+    this.blurred.emit((e.target as HTMLInputElement).value);
   }
 }

@@ -12,10 +12,18 @@ interface MonthView {
   weeks: Day[][];
 }
 
+type PickerKind = 'month' | 'year';
+interface PickerState { grid: number; kind: PickerKind; }
+
 // Small two-month calendar. Each month has its OWN left/right arrows and can be
 // navigated independently of the other. It's controlled: selection (start/end)
 // comes in as inputs; it emits a clicked date (pick). The `base` input only seeds
 // the initial months (and re-seeds on reset) — navigation afterwards is internal.
+//
+// The header month and year are SEPARATE buttons. Clicking either opens a picker
+// in the body (under the header): the month picker is a 12-month grid, the year
+// picker is a grid of year boxes with ‹ / › arrows to page through earlier/later
+// years. Choosing a box applies it to that grid immediately.
 @Component({
   standalone: true,
   selector: 'app-mini-calendar',
@@ -46,8 +54,10 @@ export class MiniCalendar {
   b0 = signal(this.firstOfMonth(new Date()));
   b1 = signal(this.addMonths(this.firstOfMonth(new Date()), 1));
 
-  picking = signal<number | null>(null); // which grid's month/year picker is open (0 or 1)
-  pickYear = signal(new Date().getFullYear());
+  // which grid's picker is open, and which kind (month grid vs year grid)
+  picker = signal<PickerState | null>(null);
+  // first year shown in the year-boxes grid (12 per page)
+  yearStart = signal(new Date().getFullYear() - 5);
 
   months = computed<MonthView[]>(() =>
     this.single
@@ -55,24 +65,49 @@ export class MiniCalendar {
       : [this.buildMonth(this.b0()), this.buildMonth(this.b1())],
   );
 
+  // the 12 years currently shown in the year picker
+  yearWindow = computed<number[]>(() => {
+    const s = this.yearStart();
+    return Array.from({ length: 12 }, (_, i) => s + i);
+  });
+
   // ---- per-grid month navigation (each arrow moves only its own month) ----
   private baseSig(grid: number) { return grid === 1 ? this.b1 : this.b0; }
   prev(grid: number): void { const s = this.baseSig(grid); s.set(this.addMonths(s(), -1)); }
   next(grid: number): void { const s = this.baseSig(grid); s.set(this.addMonths(s(), 1)); }
 
-  // month/year picker (per grid)
-  openPicker(grid: number): void {
-    this.pickYear.set(this.months()[grid].y);
-    this.picking.set(this.picking() === grid ? null : grid);
+  // ---- month / year pickers (per grid) ----
+  isPicking(grid: number, kind: PickerKind): boolean {
+    const p = this.picker();
+    return !!p && p.grid === grid && p.kind === kind;
   }
-  yearStep(n: number): void { this.pickYear.update(y => y + n); }
-  chooseMonth(m: number): void {
-    const grid = this.picking() ?? 0;
-    this.baseSig(grid).set(new Date(this.pickYear(), m, 1));
-    this.picking.set(null);
-  }
+  isPickerOpen(grid: number): boolean { const p = this.picker(); return !!p && p.grid === grid; }
 
-  onPick(d: Day): void { if (d.inMonth) this.pick.emit(d.date); }
+  openPicker(grid: number, kind: PickerKind): void {
+    const p = this.picker();
+    if (p && p.grid === grid && p.kind === kind) { this.picker.set(null); return; }
+    if (kind === 'year') this.yearStart.set(this.baseSig(grid)().getFullYear() - 5);
+    this.picker.set({ grid, kind });
+  }
+  closePicker(): void { this.picker.set(null); }
+
+  // choose a month from the grid -> applies to that grid and closes the picker
+  chooseMonth(grid: number, m: number): void {
+    const s = this.baseSig(grid);
+    s.set(new Date(s().getFullYear(), m, 1));
+    this.picker.set(null);
+  }
+  // choose a year box -> applies to that grid and closes the picker
+  chooseYear(grid: number, y: number): void {
+    const s = this.baseSig(grid);
+    s.set(new Date(y, s().getMonth(), 1));
+    this.picker.set(null);
+  }
+  // page the year grid back/forward (12 years at a time); keeps the picker open
+  yearPage(delta: number): void { this.yearStart.update(s => s + delta); }
+
+  // picking a day also dismisses any open month/year picker
+  onPick(d: Day): void { if (d.inMonth) { this.picker.set(null); this.pick.emit(d.date); } }
 
   // ---- day-cell state (from the start/end inputs) ----
   isStart(d: Day): boolean { return this.same(d.date, this.start); }
